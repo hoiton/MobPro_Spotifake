@@ -55,6 +55,8 @@ dependencies {
     implementation(libs.dagger.hilt)
     ksp(libs.dagger.hilt.compiler)
     implementation(libs.androidx.hilt.navigation)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
