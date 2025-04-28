@@ -9,8 +9,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.outlined.List
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,10 +25,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import ch.hslu.spotifake.ui.library.LibraryView
 import ch.hslu.spotifake.ui.navigation.BottomNavigation
 import ch.hslu.spotifake.ui.navigation.BottomNavigationItem
 import ch.hslu.spotifake.ui.navigation.SpotifakeScreens
+import ch.hslu.spotifake.ui.player.PlayerView
 import ch.hslu.spotifake.ui.theme.SpotifakeTheme
+import ch.hslu.spotifake.ui.upload.UploadView
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -42,24 +48,20 @@ class MainActivity : ComponentActivity() {
                             route = SpotifakeScreens.Player.name,
                             title = SpotifakeScreens.Player.name,
                             selectedIcon = Icons.Filled.PlayArrow,
-                            unselectedIcon = Icons.Outlined.Home,
-                            hasNews = false
+                            unselectedIcon = Icons.Outlined.PlayArrow,
                         ),
                         BottomNavigationItem(
                             route = SpotifakeScreens.Library.name,
                             title = SpotifakeScreens.Library.name,
                             selectedIcon = Icons.AutoMirrored.Filled.List,
                             unselectedIcon = Icons.AutoMirrored.Outlined.List,
-                            hasNews = false
                         ),
-                        // ToDo: Add Third view
-//                        BottomNavigationItem(
-//                            route = SpotifakeScreens.Settings.name,
-//                            title = SpotifakeScreens.Settings.name,
-//                            selectedIcon = Icons.Filled.Star,
-//                            unselectedIcon = Icons.Outlined.Star,
-//                            hasNews = true,
-//                        )
+                        BottomNavigationItem(
+                            route = SpotifakeScreens.Upload.name,
+                            title = SpotifakeScreens.Upload.name,
+                            selectedIcon = Icons.Filled.Add,
+                            unselectedIcon = Icons.Outlined.Add
+                        )
                     )
                 }
                 Scaffold(
@@ -92,26 +94,13 @@ fun SpotifakeNavHost(
         modifier = modifier,
     ) {
         composable(route = SpotifakeScreens.Player.name) {
-            Text(text = "Player Screen")
+            PlayerView()
         }
         composable(route = SpotifakeScreens.Library.name) {
-            Text(text = "Library Screen")
+            LibraryView()
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    SpotifakeTheme {
-        Greeting("Android")
+        composable(route = SpotifakeScreens.Upload.name) {
+            UploadView()
+        }
     }
 }

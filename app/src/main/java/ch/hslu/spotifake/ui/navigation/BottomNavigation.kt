@@ -1,7 +1,5 @@
 package ch.hslu.spotifake.ui.navigation
 
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -36,29 +34,14 @@ fun BottomNavigation(
                     Text(text = item.title)
                 },
                 icon = {
-                    BadgedBox(
-                        badge = {
-                            when {
-                                item.badgeCount != null -> {
-                                    Badge {
-                                        Text(text = item.badgeCount.toString())
-                                    }
-                                }
-                                item.hasNews -> {
-                                    Badge()
-                                }
-                            }
-                        }
-                    ) {
-                        Icon(
-                            imageVector = if (isSelected) {
-                                item.selectedIcon
-                            } else {
-                                item.unselectedIcon
-                            },
-                            contentDescription = item.title
-                        )
-                    }
+                    Icon(
+                        imageVector = if (isSelected) {
+                            item.selectedIcon
+                        } else {
+                            item.unselectedIcon
+                        },
+                        contentDescription = item.title
+                    )
                 }
             )
         }
