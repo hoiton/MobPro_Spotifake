@@ -12,12 +12,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -26,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 
 @Preview(showBackground = true)
@@ -53,7 +57,7 @@ fun PlayerView(
 fun PlayerScreen(
     albumArtUrl: String,
     title: String,
-    subtitle: String
+    subtitle: String,
 ) {
     Column(
         modifier = Modifier
@@ -96,15 +100,44 @@ fun PlayerScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { /* TODO: prev */ }) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous")
-            }
-            IconButton(onClick = { /* TODO: play/pause */ }) {
+            PlayerControls()
+        }
+    }
+}
+
+@Composable
+fun PlayerControls(
+    viewModel: PlayerViewModel = hiltViewModel()
+) {
+    val isPlaying by viewModel.isPlaying.collectAsState()
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 24.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = { viewModel.prev() }) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = "Previous"
+            )
+        }
+
+        IconButton(onClick = { viewModel.playOrPause() }) {
+            if (isPlaying) {
+                Icon(Icons.Default.Clear, contentDescription = "Pause")
+            } else {
                 Icon(Icons.Default.PlayArrow, contentDescription = "Play")
             }
-            IconButton(onClick = { /* TODO: next */ }) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next")
-            }
+        }
+
+        IconButton(onClick = { viewModel.next() }) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = "Next"
+            )
         }
     }
 }
