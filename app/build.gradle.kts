@@ -21,6 +21,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            isMinifyEnabled = false
+            kotlinOptions {
+                freeCompilerArgs = listOf("-Xdebug")
+            }
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -57,6 +63,7 @@ dependencies {
     implementation(libs.androidx.hilt.navigation)
     implementation(libs.coil.compose)
     implementation(libs.coil.network)
+    implementation(libs.google.accompanist)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
