@@ -26,7 +26,7 @@ fun UploadView(
 ) {
     val trackName by viewModel.trackName.collectAsState()
     val artistName by viewModel.artistName.collectAsState()
-    val selectedFileUri by viewModel.selectedFileUri.collectAsState()
+    val selectedFileName by viewModel.selectedFileName.collectAsState()
 
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -59,7 +59,7 @@ fun UploadView(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = selectedFileUri?.lastPathSegment ?: "Select Music File"
+                text = selectedFileName ?: "Select Music File"
             )
         }
 
@@ -67,7 +67,7 @@ fun UploadView(
 
         Button(
             onClick = viewModel::uploadTrack,
-            enabled = trackName.isNotBlank() && artistName.isNotBlank() && selectedFileUri != null,
+            enabled = trackName.isNotBlank() && artistName.isNotBlank() && selectedFileName != null,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Upload")

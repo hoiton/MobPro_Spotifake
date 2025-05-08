@@ -1,6 +1,7 @@
 package ch.hslu.spotifake.ui.upload
 
 import android.app.Application
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.AndroidViewModel
@@ -22,8 +23,10 @@ class UploadViewModel @Inject constructor(
     private val _artistName = MutableStateFlow("")
     val artistName: StateFlow<String> = _artistName
 
-    private val _selectedFileUri = MutableStateFlow<Uri?>(null)
-    val selectedFileUri: StateFlow<Uri?> = _selectedFileUri
+    private val _selectedFileName = MutableStateFlow<String?>(null)
+    val selectedFileName: StateFlow<String?> = _selectedFileName
+
+    private var _selectedFileUri: Uri? = null
 
     fun onTrackNameChange(newName: String) {
         _trackName.value = newName
@@ -34,30 +37,47 @@ class UploadViewModel @Inject constructor(
     }
 
     fun onFileSelected(uri: Uri?) {
-        _selectedFileUri.value = uri
+        _selectedFileUri = uri
+        if (uri == null) {
+            _selectedFileName.value = null
+            return
+        }
+        val context = getApplication<Application>()
+
+        _selectedFileName.value = context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+            ?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
+                } else null
+            }
+
+        val retriever = MediaMetadataRetriever()
+        try {
+            retriever.setDataSource(context, uri)
+        } catch (e: IllegalArgumentException) {
+            context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+                retriever.setDataSource(pfd.fileDescriptor)
+            }
+        }
+
+        _trackName.value =  retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE).orEmpty()
+        _artistName.value = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST).orEmpty()
     }
 
     fun uploadTrack() {
         viewModelScope.launch {
             val name = _trackName.value
             val artist = _artistName.value
-            val uri = _selectedFileUri.value ?: return@launch
+            val uri = _selectedFileUri ?: return@launch
 
             val application = getApplication<Application>()
             val cr = application.contentResolver
 
             val filesDir = application.filesDir
 
-            val rawName = cr.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
-                ?.use { cursor ->
-                    if (cursor.moveToFirst()) {
-                        cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
-                    } else null
-                }
-
-            val safeName = rawName
-                ?.replace(Regex("""[\\/]+"""), "_")       // no slashes
-                ?.takeIf { it.contains('.') }            // must have an extension
+            val safeName = _selectedFileName.value
+                ?.replace(Regex("""[\\/]+"""), "_")
+                ?.takeIf { it.contains('.') }
                 ?: "upload_${System.currentTimeMillis()}.bin"
             val storageFile = File(filesDir, safeName)
 
@@ -70,7 +90,8 @@ class UploadViewModel @Inject constructor(
 
             _trackName.value = ""
             _artistName.value = ""
-            _selectedFileUri.value = null
+            _selectedFileName.value = null
+            _selectedFileUri = null
         }
     }
 }
