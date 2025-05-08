@@ -2,6 +2,7 @@ package ch.hslu.spotifake.ui.upload
 
 import android.app.Application
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,10 +44,22 @@ class UploadViewModel @Inject constructor(
             val uri = _selectedFileUri.value ?: return@launch
 
             val application = getApplication<Application>()
+            val cr = application.contentResolver
 
             val filesDir = application.filesDir
-            val ext = uri.path?.substringAfterLast('.')
-            val storageFile = File(filesDir, "upload_${System.currentTimeMillis()}.$ext")
+
+            val rawName = cr.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+                ?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
+                    } else null
+                }
+
+            val safeName = rawName
+                ?.replace(Regex("""[\\/]+"""), "_")       // no slashes
+                ?.takeIf { it.contains('.') }            // must have an extension
+                ?: "upload_${System.currentTimeMillis()}.bin"
+            val storageFile = File(filesDir, safeName)
 
             // Copy URI content into local file
             application.contentResolver.openInputStream(uri)?.use { inStream ->
