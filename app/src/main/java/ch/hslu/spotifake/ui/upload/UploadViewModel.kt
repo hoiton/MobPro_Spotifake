@@ -6,6 +6,8 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import ch.hslu.spotifake.db.Track
+import ch.hslu.spotifake.db.TrackDatabase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -87,6 +89,13 @@ class UploadViewModel @Inject constructor(
                     inStream.copyTo(outStream)
                 }
             }
+
+            // Safe in database
+            val track = Track(
+                0, _trackName.value, _artistName.value, null, safeName
+            )
+            val db = TrackDatabase.getDatabase(application)
+            db.trackDao().insertTrack(track)
 
             _trackName.value = ""
             _artistName.value = ""

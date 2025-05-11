@@ -12,19 +12,17 @@ import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import ch.hslu.spotifake.db.TrackDatabase
 import ch.hslu.spotifake.ui.library.LibraryView
 import ch.hslu.spotifake.ui.navigation.BottomNavigation
 import ch.hslu.spotifake.ui.navigation.BottomNavigationItem
@@ -64,6 +62,9 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                 }
+
+                val db = TrackDatabase.getDatabase(this)
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
@@ -75,7 +76,8 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     SpotifakeNavHost(
                         navController = navController,
-                        modifier = Modifier.padding(innerPadding)
+                        modifier = Modifier.padding(innerPadding),
+                        database = db
                     )
                 }
             }
@@ -86,7 +88,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun SpotifakeNavHost(
     navController: NavHostController,
-    modifier: Modifier
+    modifier: Modifier,
+    database: TrackDatabase
 ) {
     NavHost(
         navController = navController,
@@ -97,7 +100,7 @@ fun SpotifakeNavHost(
             PlayerView()
         }
         composable(route = SpotifakeScreens.Library.name) {
-            LibraryView()
+            LibraryView(database)
         }
         composable(route = SpotifakeScreens.Upload.name) {
             UploadView()
