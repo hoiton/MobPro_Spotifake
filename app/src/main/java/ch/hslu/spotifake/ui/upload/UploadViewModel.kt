@@ -90,9 +90,8 @@ class UploadViewModel @Inject constructor(
                 }
             }
 
-            // Safe in database
             val track = Track(
-                0, _trackName.value, _artistName.value, null, safeName
+                0, _trackName.value, _artistName.value, "https://lastfm.freetls.fastly.net/i/u/770x0/0cc48bdf9e22bf52c4d91b9f66873319.jpg", storageFile.path
             )
             val db = TrackDatabase.getDatabase(application)
             db.trackDao().insertTrack(track)
