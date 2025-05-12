@@ -16,6 +16,7 @@ coil = "3.0.4"
 accompanist = "0.37.0"
 room = "2.6.1"
 roomCommonJvm = "2.7.1"
+androidx-media = "1.6.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -43,6 +44,7 @@ androidx-room-runtime = { group= "androidx.room", name = "room-runtime", version
 androidx-room-compiler = { group= "androidx.room", name = "room-compiler", version.ref = "room"}
 androidx-room-ktx = { group= "androidx.room", name = "room-ktx", version.ref = "room"}
 androidx-room-common-jvm = { group = "androidx.room", name = "room-common-jvm", version.ref = "roomCommonJvm" }
+androidx-media = { module = "androidx.media:media", version.ref = "androidx-media"}
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
