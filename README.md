@@ -8,5 +8,6 @@ Spotifake is a local Music player.
 - [ ] Album cover should be the same as the one in Spotify
 - [ ] Add a search bar
 - [x] Add notification when song is playing
-- [ ] Notification and player should disappear when closing the app
-- [ ] Add progress bar
+- [x] Notification and player should disappear when closing the app
+- [x] Add progress bar
+- [ ] Add progress control

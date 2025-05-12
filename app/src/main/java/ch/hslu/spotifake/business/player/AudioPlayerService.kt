@@ -13,6 +13,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
 import androidx.media.app.NotificationCompat.MediaStyle
+import ch.hslu.spotifake.MainActivity
 import java.io.File
 
 class AudioPlayerService : Service() {
@@ -67,6 +68,12 @@ class AudioPlayerService : Service() {
         return START_STICKY
     }
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
+    }
+
     private fun initMediaSession() {
         mediaSession = MediaSessionCompat(this, "AudioPlayerService").apply {
             setCallback(object : MediaSessionCompat.Callback() {
@@ -74,7 +81,10 @@ class AudioPlayerService : Service() {
                 override fun onPause() = playPause()
                 override fun onSkipToNext() = skipToNext()
                 override fun onSkipToPrevious() = skipToPrev()
-                override fun onStop() = stopSelf()
+                override fun onStop() {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                }
             })
             isActive = true
         }
@@ -115,6 +125,7 @@ class AudioPlayerService : Service() {
 
     private fun updateSession() {
         val isPlaying = mediaPlayer?.isPlaying == true
+        val duration = mediaPlayer?.duration?.toLong() ?: 0L
         val state = if (isPlaying) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED
 
         playbackStateBuilder
@@ -133,6 +144,7 @@ class AudioPlayerService : Service() {
         mediaSession.setMetadata(
             MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
+                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
                 .build()
         )
 
@@ -140,6 +152,14 @@ class AudioPlayerService : Service() {
     }
 
     private fun buildNotification(isPlaying: Boolean): Notification {
+        val openAppIntent = PendingIntent.getActivity(
+            this, 0,
+            Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            },
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
         fun pi(action: String) = PendingIntent.getService(
             this, 0,
             Intent(this, AudioPlayerService::class.java).setAction(action),
@@ -149,6 +169,7 @@ class AudioPlayerService : Service() {
         val playPauseIcon = if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentIntent(openAppIntent)
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentTitle("Audio Player")
             .setContentText(audioFiles.getOrNull(currentIndex)?.name ?: "")
@@ -173,7 +194,6 @@ class AudioPlayerService : Service() {
             NotificationManager.IMPORTANCE_LOW
         ).apply {
             description = "Controls for audio playback"
-//            setShowBadge(false)
         }
         val mgr = getSystemService(NotificationManager::class.java)
         mgr.createNotificationChannel(chan)
