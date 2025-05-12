@@ -6,6 +6,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import ch.hslu.spotifake.business.LastFmService
 import ch.hslu.spotifake.db.Track
 import ch.hslu.spotifake.db.TrackDatabase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,7 +18,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class UploadViewModel @Inject constructor(
-    application: Application
+    application: Application,
+    private val lastFm: LastFmService
 ) : AndroidViewModel(application) {
     private val _trackName = MutableStateFlow("")
     val trackName: StateFlow<String> = _trackName
@@ -27,6 +29,9 @@ class UploadViewModel @Inject constructor(
 
     private val _selectedFileName = MutableStateFlow<String?>(null)
     val selectedFileName: StateFlow<String?> = _selectedFileName
+
+    private val _selectedAlbumArtUrl = MutableStateFlow<String?>(null)
+    val selectedAlbumArtUrl: StateFlow<String?> = _selectedAlbumArtUrl
 
     private var _selectedFileUri: Uri? = null
 
@@ -64,6 +69,15 @@ class UploadViewModel @Inject constructor(
 
         _trackName.value =  retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE).orEmpty()
         _artistName.value = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST).orEmpty()
+
+        if (_trackName.value.isNotEmpty() && _artistName.value.isNotEmpty()) {
+            viewModelScope.launch {
+                val imageUrl = lastFm.getLargestAlbumArtUrl(_artistName.value, _trackName.value)
+                if (imageUrl != null) {
+                    _selectedAlbumArtUrl.value = imageUrl
+                }
+            }
+        }
     }
 
     fun uploadTrack() {

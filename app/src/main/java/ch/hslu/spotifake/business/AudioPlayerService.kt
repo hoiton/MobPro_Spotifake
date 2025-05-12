@@ -1,4 +1,4 @@
-package ch.hslu.spotifake.business.player
+package ch.hslu.spotifake.business
 
 import android.app.Notification
 import android.app.NotificationChannel
