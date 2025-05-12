@@ -4,11 +4,12 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TrackDao {
     @Query("SELECT * FROM track")
-    fun getAll(): List<Track>
+    fun getAll(): Flow<List<Track>>
 
     @Query("SELECT * FROM track WHERE uid IN (:trackIds)")
     fun loadAllByIds(trackIds: IntArray): List<Track>

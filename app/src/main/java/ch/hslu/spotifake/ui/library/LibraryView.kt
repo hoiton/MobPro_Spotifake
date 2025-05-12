@@ -3,20 +3,21 @@ package ch.hslu.spotifake.ui.library
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.hilt.navigation.compose.hiltViewModel
-import ch.hslu.spotifake.db.TrackDatabase
 
 @Composable
 fun LibraryView(
-    db: TrackDatabase,
     viewModel: LibraryViewModel = hiltViewModel()
 ) {
-    val stringList = db.trackDao().getAll()
+    val tracks by viewModel.allItems.observeAsState(emptyList())
+
     LazyColumn {
         items(
-            count = stringList.size
+            count = tracks.size
         ) { index ->
-            Text(stringList[index].trackName + ", " + stringList[index].artist)
+            Text(tracks[index].trackName + ", " + tracks[index].artist)
         }
     }
 }

@@ -22,7 +22,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import ch.hslu.spotifake.db.TrackDatabase
 import ch.hslu.spotifake.ui.library.LibraryView
 import ch.hslu.spotifake.ui.navigation.BottomNavigation
 import ch.hslu.spotifake.ui.navigation.BottomNavigationItem
@@ -63,8 +62,6 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                val db = TrackDatabase.getDatabase(this)
-
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
@@ -76,8 +73,7 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     SpotifakeNavHost(
                         navController = navController,
-                        modifier = Modifier.padding(innerPadding),
-                        database = db
+                        modifier = Modifier.padding(innerPadding)
                     )
                 }
             }
@@ -88,8 +84,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun SpotifakeNavHost(
     navController: NavHostController,
-    modifier: Modifier,
-    database: TrackDatabase
+    modifier: Modifier
 ) {
     NavHost(
         navController = navController,
@@ -100,7 +95,7 @@ fun SpotifakeNavHost(
             PlayerView()
         }
         composable(route = SpotifakeScreens.Library.name) {
-            LibraryView(database)
+            LibraryView()
         }
         composable(route = SpotifakeScreens.Upload.name) {
             UploadView()
