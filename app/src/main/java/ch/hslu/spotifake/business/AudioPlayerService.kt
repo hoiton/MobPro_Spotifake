@@ -16,8 +16,8 @@ import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
 import androidx.media.app.NotificationCompat.MediaStyle
 import ch.hslu.spotifake.MainActivity
+import ch.hslu.spotifake.db.PlaylistDao
 import ch.hslu.spotifake.db.Track
-import ch.hslu.spotifake.db.TrackDao
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
@@ -46,7 +46,7 @@ class AudioPlayerService : Service() {
         const val ACTION_STOP = "ACTION_STOP"
     }
 
-    @Inject lateinit var trackDao: TrackDao
+    @Inject lateinit var playlistDao: PlaylistDao
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var trackList: List<Track> = emptyList()
@@ -62,7 +62,7 @@ class AudioPlayerService : Service() {
         initMediaSession()
 
         serviceScope.launch {
-            trackDao.getAll().collect { tracks ->
+            playlistDao.getAllTracks().collect { tracks ->
                 trackList = tracks
                 // Optional: reset index if list became empty or changed
                 if (currentIndex >= trackList.size) {
@@ -118,7 +118,7 @@ class AudioPlayerService : Service() {
     private fun playPause() {
         if (mediaPlayer == null) {
             serviceScope.launch {
-                trackList = trackDao.getAll().first()
+                trackList = playlistDao.getAllTracks().first()
                 if (trackList.isEmpty()) return@launch
                 playTrack(currentIndex)
                 updateSession()

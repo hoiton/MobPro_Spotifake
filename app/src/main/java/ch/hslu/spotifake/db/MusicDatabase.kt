@@ -7,25 +7,26 @@ import androidx.room.RoomDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 
-@Database(entities = [Track::class], version = 1)
-abstract class TrackDatabase: RoomDatabase() {
-    abstract fun trackDao(): TrackDao
+@Database(entities = [Track::class, Playlist::class, PlaylistTrackCrossReference::class],
+    version = 1)
+abstract class MusicDatabase: RoomDatabase() {
+    abstract fun playlistDao(): PlaylistDao
 
     companion object {
-        private const val DB_NAME = "track-database"
-        private var INSTANCE: TrackDatabase? = null
-        fun getDatabase(context: Context): TrackDatabase {
+        private const val DB_NAME = "music-database"
+        private var INSTANCE: MusicDatabase? = null
+        fun getDatabase(context: Context): MusicDatabase {
             return INSTANCE ?: buildDatabase(context).also {
                 INSTANCE = it
             }
         }
 
-        private fun buildDatabase(context: Context): TrackDatabase {
+        private fun buildDatabase(context: Context): MusicDatabase {
             val ioDispatcherExecutor = Dispatchers.IO.asExecutor()
             return Room
                 .databaseBuilder(
                     context,
-                    TrackDatabase::class.java,
+                    MusicDatabase::class.java,
                     DB_NAME
                 )
                 .setQueryExecutor(ioDispatcherExecutor)

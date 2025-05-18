@@ -2,8 +2,8 @@ package ch.hslu.spotifake.di
 
 import android.content.Context
 import androidx.room.Room
-import ch.hslu.spotifake.db.TrackDao
-import ch.hslu.spotifake.db.TrackDatabase
+import ch.hslu.spotifake.db.MusicDatabase
+import ch.hslu.spotifake.db.PlaylistDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,16 +17,16 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): TrackDatabase {
+    fun provideDatabase(@ApplicationContext context: Context): MusicDatabase {
         return Room.databaseBuilder(
             context,
-            TrackDatabase::class.java,
-            "track-database"
+            MusicDatabase::class.java,
+            "music-database"
         ).build()
     }
 
     @Provides
-    fun provideMyDao(database: TrackDatabase): TrackDao {
-        return database.trackDao()
+    fun provideMyDao(database: MusicDatabase): PlaylistDao {
+        return database.playlistDao()
     }
 }

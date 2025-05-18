@@ -11,7 +11,7 @@ interface TrackDao {
     @Query("SELECT * FROM track")
     fun getAll(): Flow<List<Track>>
 
-    @Query("SELECT * FROM track WHERE uid IN (:trackIds)")
+    @Query("SELECT * FROM track WHERE trackId IN (:trackIds)")
     fun loadAllByIds(trackIds: IntArray): List<Track>
 
     @Insert

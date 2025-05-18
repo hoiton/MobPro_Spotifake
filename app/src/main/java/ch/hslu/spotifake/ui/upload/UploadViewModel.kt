@@ -8,7 +8,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import ch.hslu.spotifake.business.LastFmService
 import ch.hslu.spotifake.db.Track
-import ch.hslu.spotifake.db.TrackDatabase
+import ch.hslu.spotifake.db.MusicDatabase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -107,8 +107,8 @@ class UploadViewModel @Inject constructor(
             val track = Track(
                 0, _trackName.value, _artistName.value, "https://lastfm.freetls.fastly.net/i/u/770x0/0cc48bdf9e22bf52c4d91b9f66873319.jpg", storageFile.path
             )
-            val db = TrackDatabase.getDatabase(application)
-            db.trackDao().insertTrack(track)
+            val db = MusicDatabase.getDatabase(application)
+            db.playlistDao().insertTrack(track)
 
             _trackName.value = ""
             _artistName.value = ""

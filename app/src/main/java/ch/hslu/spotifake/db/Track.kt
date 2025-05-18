@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 
 @Entity()
 data class Track (
-    @PrimaryKey(autoGenerate = true) val uid: Int,
+    @PrimaryKey(autoGenerate = true) val trackId: Int,
     @ColumnInfo(name = "track_name") val trackName: String,
     @ColumnInfo(name = "artist") val artist: String,
     @ColumnInfo(name = "cover") val cover: String?,
