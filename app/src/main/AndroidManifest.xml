@@ -29,9 +29,9 @@
             </intent-filter>
         </activity>
 
-<!--        ToDo: add Description-->
         <service
-            android:name=".business.player.AudioPlayerService"
+            android:name=".business.AudioPlayerService"
+            android:description="Foreground service for playback of tracks"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>
