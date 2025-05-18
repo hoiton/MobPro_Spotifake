@@ -10,6 +10,7 @@ import ch.hslu.spotifake.db.Playlist
 import ch.hslu.spotifake.db.PlaylistDao
 import ch.hslu.spotifake.db.PlaylistTrackCrossReference
 import ch.hslu.spotifake.db.PlaylistWithTracks
+import ch.hslu.spotifake.db.Track
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,6 +43,12 @@ class LibraryViewModel @Inject constructor(
         dao.addTrackToPlaylist(PlaylistTrackCrossReference(playlistId, trackId))
     }
 
+    fun deleteTrack(track: Track) {
+        viewModelScope.launch {
+            dao.deleteTrack(track)
+        }
+    }
+
     fun getPlaylistWithTracks(id: Int): Flow<PlaylistWithTracks> {
         return dao.getPlaylistWithTracks(id)
     }
@@ -55,8 +62,11 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
-    fun getPlaylists(): LiveData<List<PlaylistWithTracks>> =
-        dao.getAllPlaylistsWithTracks().asLiveData()
+    fun removeTrackFromPlaylist(trackId: Int, playlistId: Int) {
+        viewModelScope.launch {
+            dao.removeTrackFromPlaylist(playlistId, trackId)
+        }
+    }
 
     private suspend fun loadLikedSongsPlaylist(): PlaylistWithTracks {
         val tracksList = dao.getAllTracks().first()

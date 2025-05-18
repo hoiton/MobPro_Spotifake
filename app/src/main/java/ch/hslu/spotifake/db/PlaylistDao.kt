@@ -33,6 +33,9 @@ interface PlaylistDao {
     @Delete
     suspend fun deletePlaylist(playlist: Playlist)
 
+    @Delete
+    suspend fun deleteTrack(track: Track)
+
     @Query("DELETE FROM PlaylistTrackCrossReference WHERE playlistId = :playlistId AND trackId = :trackId")
-    suspend fun removeTrackFromPlaylist(playlistId: String, trackId: String)
+    suspend fun removeTrackFromPlaylist(playlistId: Int, trackId: Int)
 }
