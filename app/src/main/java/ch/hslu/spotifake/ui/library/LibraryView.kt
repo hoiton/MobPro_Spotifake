@@ -14,8 +14,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +52,7 @@ fun LibraryView(
     var selectedPlaylistId by remember { mutableStateOf<Int?>(null) }
     var showDialog by remember { mutableStateOf(false) }
     var trackToAdd by remember { mutableStateOf<Track?>(null) }
+    var trackToDelete by remember { mutableStateOf<Track?>(null) }
 
     if (selectedPlaylistId == null) {
 
@@ -124,44 +128,21 @@ fun LibraryView(
                 Spacer(Modifier.height(8.dp))
 
                 LazyColumn {
-                    items(playlist.tracks.size) {
-                        index ->
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = playlist.tracks[index].trackName + ", Id = " + playlist.tracks[index].trackId,
-                                modifier = Modifier.weight(1f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-
-                            IconButton(onClick = {
+                    items(playlist.tracks.size) { index ->
+                        TrackItem(
+                            track = playlist.tracks[index],
+                            playlistId = playlist.playlist.playlistId,
+                            onAddToPlaylist = {
                                 trackToAdd = playlist.tracks[index]
                                 showDialog = true
-                            }) {
-                                Icon(Icons.Default.Add, contentDescription = "Add to playlist")
+                            },
+                            onRemoveFromPlaylist = {
+                                viewModel.removeTrackFromPlaylist(playlist.tracks[index].trackId, playlist.playlist.playlistId)
+                            },
+                            onDelete = {
+                                trackToDelete = playlist.tracks[index]
                             }
-
-                            IconButton(onClick = {
-                                viewModel.deleteTrack(playlist.tracks[index])
-                            }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Delete track", tint = Color.Red)
-                            }
-
-                            IconButton(onClick = {
-                                viewModel.removeTrackFromPlaylist(
-                                    trackId = playlist.tracks[index].trackId,
-                                    playlistId = playlist.playlist.playlistId
-                                )
-                            }) {
-                                Icon(imageVector = Icons.Default.Delete, contentDescription = "Remove from playlist", tint = Color.Blue)
-                            }
-                        }
+                        )
                     }
                 }
 
@@ -197,6 +178,27 @@ fun LibraryView(
                                 showDialog = false
                                 trackToAdd = null
                             }) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                }
+
+                if (trackToDelete != null) {
+                    AlertDialog(
+                        onDismissRequest = { trackToDelete = null },
+                        title = { Text("Delete Track") },
+                        text = { Text("Are you sure you want to permanently delete \"${trackToDelete!!.trackName}\"?") },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                viewModel.deleteTrack(trackToDelete!!)
+                                trackToDelete = null
+                            }) {
+                                Text("Delete", color = Color.Red)
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { trackToDelete = null }) {
                                 Text("Cancel")
                             }
                         }
@@ -258,4 +260,64 @@ fun CreatePlaylistDialog(
             }
         }
     )
+}
+
+@Composable
+fun TrackItem(
+    track: Track,
+    playlistId: Int?,
+    onAddToPlaylist: () -> Unit,
+    onRemoveFromPlaylist: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = track.trackName,
+            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        IconButton(onClick = { expanded = true }) {
+            Icon(Icons.Default.MoreVert, contentDescription = "Track menu")
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Add to other playlist") },
+                onClick = {
+                    expanded = false
+                    onAddToPlaylist()
+                }
+            )
+
+            if (playlistId != null) {
+                DropdownMenuItem(
+                    text = { Text("Remove from this playlist") },
+                    onClick = {
+                        expanded = false
+                        onRemoveFromPlaylist()
+                    }
+                )
+            }
+
+            DropdownMenuItem(
+                text = { Text("Delete", color = Color.Red) },
+                onClick = {
+                    expanded = false
+                    onDelete()
+                }
+            )
+        }
+    }
 }
