@@ -106,6 +106,7 @@ class AudioPlayerService : Service() {
                             currentIndex = startIndex
                             if (trackList.isNotEmpty()) {
                                 playTrack(currentIndex)
+                                updateSession()
                             }
                         }
                     } else {
