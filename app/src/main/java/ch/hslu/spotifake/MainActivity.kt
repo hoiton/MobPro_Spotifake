@@ -5,6 +5,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -100,7 +103,31 @@ fun SpotifakeNavHost(
         startDestination = SpotifakeScreens.Library.route,
         modifier = modifier,
     ) {
-        composable(route = SpotifakeScreens.Player.route) {
+        composable(
+            route = SpotifakeScreens.Player.route,
+            enterTransition = {
+                slideInVertically(
+                    initialOffsetY = { fullHeight -> fullHeight },
+                    animationSpec = tween(durationMillis = 100)
+                )
+            },
+            exitTransition = { slideOutVertically(
+                targetOffsetY = { fullHeight -> fullHeight },
+                animationSpec = tween(durationMillis = 100)
+            )},
+            popEnterTransition = {
+                slideInVertically(
+                    initialOffsetY = { fullHeight -> fullHeight },
+                    animationSpec = tween(durationMillis = 100)
+                )
+            },
+            popExitTransition = {
+                slideOutVertically(
+                    targetOffsetY = { fullHeight -> fullHeight },
+                    animationSpec = tween(durationMillis = 100)
+                )
+            }
+        ) {
             PlayerView()
         }
         composable(route = SpotifakeScreens.Upload.route) {

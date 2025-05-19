@@ -71,7 +71,7 @@ dependencies {
     implementation(libs.androidx.hilt.navigation)
     implementation(libs.coil.compose)
     implementation(libs.coil.network)
-    implementation(libs.google.accompanist)
+    implementation(libs.google.accompanist.permissions)
     implementation(libs.androidx.media)
     implementation(libs.androidx.material.icons.extended)
     testImplementation(libs.junit)
