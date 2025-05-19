@@ -24,8 +24,6 @@ class UploadViewModel @Inject constructor(
     application: Application,
     private val lastFm: LastFmService
 ) : AndroidViewModel(application) {
-    private val DEFAULT_ART_URL = "https://f4.bcbits.com/img/a0768625472_16.jpg"
-
     private val _trackName = MutableStateFlow("")
     val trackName: StateFlow<String> = _trackName
 
@@ -37,11 +35,11 @@ class UploadViewModel @Inject constructor(
 
     private val _selectedAlbumArtUrl = MutableStateFlow<String?>(null)
     val selectedAlbumArtUrl: StateFlow<String> = _selectedAlbumArtUrl
-        .map { it ?: DEFAULT_ART_URL }
+        .map { it ?: Track.DEFAULT_COVER_URL }
         .stateIn(
             scope       = viewModelScope,
             started     = SharingStarted.WhileSubscribed(5_000),
-            initialValue = DEFAULT_ART_URL
+            initialValue = Track.DEFAULT_COVER_URL
         )
 
     private var _selectedFileUri: Uri? = null

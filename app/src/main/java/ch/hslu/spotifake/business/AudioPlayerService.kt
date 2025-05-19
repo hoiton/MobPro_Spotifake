@@ -9,6 +9,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.media.MediaPlayer
 import android.net.Uri
+import android.os.Binder
 import android.os.IBinder
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
@@ -28,6 +29,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -51,10 +54,17 @@ class AudioPlayerService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var trackList: List<Track> = emptyList()
     private var currentIndex = 0
+    private val _currentTrackFlow = MutableStateFlow<Track?>(null)
+    val currentTrackFlow: StateFlow<Track?> = _currentTrackFlow
 
     private lateinit var mediaSession: MediaSessionCompat
     private val playbackStateBuilder = PlaybackStateCompat.Builder()
     private var mediaPlayer: MediaPlayer? = null
+
+    inner class LocalBinder : Binder() {
+        fun getService(): AudioPlayerService = this@AudioPlayerService
+    }
+    private val binder = LocalBinder()
 
     override fun onCreate() {
         super.onCreate()
@@ -71,8 +81,6 @@ class AudioPlayerService : Service() {
             }
         }
     }
-
-    override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         intent?.action?.let { action ->
@@ -97,6 +105,10 @@ class AudioPlayerService : Service() {
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
         super.onTaskRemoved(rootIntent)
+    }
+
+    override fun onBind(intent: Intent?): IBinder {
+        return binder
     }
 
     private fun initMediaSession() {
@@ -133,6 +145,7 @@ class AudioPlayerService : Service() {
 
     private fun playTrack(index: Int) {
         val track = trackList[index]
+        _currentTrackFlow.value = track
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer().apply {
             setDataSource(this@AudioPlayerService, Uri.parse(track.fileURI))
@@ -261,5 +274,10 @@ class AudioPlayerService : Service() {
         mediaSession.release()
         serviceScope.cancel()
         super.onDestroy()
+    }
+
+    fun getCurrentTrack(): Track? {
+        if (trackList.isEmpty()) return null
+        return trackList[currentIndex]
     }
 }

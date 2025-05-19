@@ -1,7 +1,5 @@
 package ch.hslu.spotifake.ui.upload
 
-import FolderIcon
-import MusicNoteIcon
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,6 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -105,7 +105,7 @@ fun UploadView(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(
-                        imageVector = MusicNoteIcon,
+                        imageVector = Icons.Default.MusicNote,
                         contentDescription = null,
                         modifier = Modifier.size(24.dp)
                     )
@@ -124,7 +124,7 @@ fun UploadView(
                     .height(48.dp)
             ) {
                 Icon(
-                    imageVector = FolderIcon,
+                    imageVector = Icons.Outlined.FolderOpen,
                     contentDescription = null
                 )
                 Spacer(Modifier.width(8.dp))
