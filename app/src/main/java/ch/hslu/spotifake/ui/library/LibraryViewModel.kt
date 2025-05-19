@@ -39,7 +39,7 @@ class LibraryViewModel @Inject constructor(
         dao.insertPlaylist(Playlist(playlistId = 0, playlistName = name))
     }
 
-    fun addTrackToPlaylist(playlistId: Int, trackId: Int) = viewModelScope.launch {
+    fun addTrackToPlaylist(trackId: Int, playlistId: Int) = viewModelScope.launch {
         dao.addTrackToPlaylist(PlaylistTrackCrossReference(playlistId, trackId))
     }
 
@@ -65,6 +65,12 @@ class LibraryViewModel @Inject constructor(
     fun removeTrackFromPlaylist(trackId: Int, playlistId: Int) {
         viewModelScope.launch {
             dao.removeTrackFromPlaylist(playlistId, trackId)
+        }
+    }
+
+    fun deletePlaylist(playlist: Playlist) {
+        viewModelScope.launch {
+            dao.deletePlaylist(playlist)
         }
     }
 

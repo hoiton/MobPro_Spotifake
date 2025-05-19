@@ -33,7 +33,6 @@ fun TracksScreen(
     playlistWithTracks?.let {
         TracksView(
             playlistWithTracks = it,
-            onAddToPlaylist = { trackToAdd = it; showDialog = true },
             onRemoveFromPlaylist = { track ->
                 viewModel.removeTrackFromPlaylist(track.trackId, playlistId)
             },
