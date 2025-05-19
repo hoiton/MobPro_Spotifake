@@ -44,6 +44,10 @@ fun TracksScreen(
             playlists = playlists,
             onAddTrackToPlaylist = { trackId, targetPlaylistId ->
                 viewModel.addTrackToPlaylist(trackId, targetPlaylistId)
+            },
+            onPlayAll = { trackList ->
+                // TODO: Implement logic to play the list of tracks
+                println("Playing all: ${trackList.map { it.trackName }}")
             }
         )
     }

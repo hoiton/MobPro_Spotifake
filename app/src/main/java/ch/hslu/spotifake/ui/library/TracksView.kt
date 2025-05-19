@@ -36,7 +36,8 @@ fun TracksView(
     onDialogDismiss: () -> Unit,
     onTrackSelectedToAdd: (Track?) -> Unit,
     playlists: List<PlaylistWithTracks>,
-    onAddTrackToPlaylist: (Int, Int) -> Unit
+    onAddTrackToPlaylist: (Int, Int) -> Unit,
+    onPlayAll: (List<Track>) -> Unit
 ) {
     val (showDialog, trackToAdd) = dialogState
 
@@ -55,7 +56,19 @@ fun TracksView(
                     Text("Pretty lonely in here...", color = Color.Gray)
                 }
             } else {
-                LazyColumn {
+                PlaybackControls(
+                    playlistWithTracks = playlistWithTracks,
+                    onPlayAll = { tracks ->
+                        // TODO
+                    },
+                    modifier = Modifier.align(Alignment.TopEnd)
+                )
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 76.dp)
+                ) {
                     items(playlistWithTracks.tracks.size) { index ->
                         val track = playlistWithTracks.tracks[index]
                         TrackItem(
