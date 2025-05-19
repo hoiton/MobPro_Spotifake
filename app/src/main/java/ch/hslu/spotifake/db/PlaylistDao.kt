@@ -13,6 +13,9 @@ interface PlaylistDao {
     @Query("SELECT * FROM track")
     fun getAllTracks(): Flow<List<Track>>
 
+    @Query("SELECT * FROM track WHERE trackId IN (:trackIds)")
+    suspend fun loadAllTracksByIds(trackIds: IntArray): List<Track>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertTrack(track: Track)
 

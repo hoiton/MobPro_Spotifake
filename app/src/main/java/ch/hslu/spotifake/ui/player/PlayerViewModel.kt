@@ -29,11 +29,17 @@ class PlayerViewModel @Inject constructor(
     private val _currentTrack = MutableStateFlow<Track?>(null)
     val currentTrack: StateFlow<Track?> = _currentTrack
 
+    private val _isPlaying = MutableStateFlow(false)
+    val isPlaying: StateFlow<Boolean> = _isPlaying
+
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             service = (binder as AudioPlayerService.LocalBinder).getService()
             service?.currentTrackFlow
                 ?.onEach { _currentTrack.value = it }
+                ?.launchIn(viewModelScope)
+            service?.isPlayingFlow
+                ?.onEach { _isPlaying.value = it }
                 ?.launchIn(viewModelScope)
         }
         override fun onServiceDisconnected(name: ComponentName?) {

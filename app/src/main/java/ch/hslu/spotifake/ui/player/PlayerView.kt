@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,7 +39,11 @@ fun TestPlayerScreen() {
     PlayerScreen(
         albumArtUrl = Track.DEFAULT_COVER_URL,
         title = "Song Title",
-        subtitle = "Artist Name"
+        subtitle = "Artist Name",
+        playPause = {},
+        previous = {},
+        next = {},
+        isPlaying = false
     )
 }
 
@@ -46,11 +52,16 @@ fun PlayerView(
     viewModel: PlayerViewModel = hiltViewModel()
 ){
     val currentTrack by viewModel.currentTrack.collectAsState()
+    val isPlaying by viewModel.isPlaying.collectAsState()
     PlayerScreen(
         albumArtUrl = currentTrack?.cover ?: Track.DEFAULT_COVER_URL,
         title = currentTrack?.trackName ?: "Song Title",
-        subtitle = currentTrack?.artist ?: "Artist Name"
-    )
+        subtitle = currentTrack?.artist ?: "Artist Name",
+        playPause = { viewModel.playOrPause() },
+        previous = { viewModel.prev() },
+        next = { viewModel.next() },
+        isPlaying = isPlaying
+        )
 }
 
 @Composable
@@ -58,6 +69,10 @@ fun PlayerScreen(
     albumArtUrl: String,
     title: String,
     subtitle: String,
+    playPause: () -> Unit = {},
+    previous: () -> Unit,
+    next: () -> Unit = {},
+    isPlaying: Boolean = false,
 ) {
     Column(
         modifier = Modifier
@@ -100,16 +115,23 @@ fun PlayerScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            PlayerControls()
+            PlayerControls(
+                playPause = playPause,
+                previous = previous,
+                next = next,
+                isPlaying = isPlaying
+            )
         }
     }
 }
 
 @Composable
 fun PlayerControls(
-    viewModel: PlayerViewModel = hiltViewModel()
-) {
-//    val isPlaying by viewModel.isPlaying.collectAsState()
+    playPause: () -> Unit = {},
+    previous: () -> Unit,
+    next: () -> Unit = {},
+    isPlaying: Boolean = false,
+    ) {
 
     Row(
         modifier = Modifier
@@ -118,7 +140,7 @@ fun PlayerControls(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = { viewModel.prev() }) {
+        IconButton(onClick = { previous() }) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                 contentDescription = "Previous"
@@ -126,18 +148,16 @@ fun PlayerControls(
         }
 
         IconButton(onClick = {
-            viewModel.playOrPause()
+            playPause()
         }) {
-            Icon(Icons.Default.PlayArrow, contentDescription = "Play")
-            // ToDo: Change icon based on isPlaying state
-//            if (isPlaying) {
-//                Icon(Icons.Default.Clear, contentDescription = "Pause")
-//            } else {
-//                Icon(Icons.Default.PlayArrow, contentDescription = "Play")
-//            }
+            if (isPlaying) {
+                Icon(Icons.Default.Pause, contentDescription = "Pause")
+            } else {
+                Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+            }
         }
 
-        IconButton(onClick = { viewModel.next() }) {
+        IconButton(onClick = { next() }) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = "Next"

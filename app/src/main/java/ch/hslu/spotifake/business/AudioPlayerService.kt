@@ -47,6 +47,9 @@ class AudioPlayerService : Service() {
         const val ACTION_NEXT = "ACTION_NEXT"
         const val ACTION_PREV = "ACTION_PREV"
         const val ACTION_STOP = "ACTION_STOP"
+        const val ACTION_PLAY_TRACKS = "ACTION_PLAY_TRACKS"
+
+        const val EXTRA_TRACK_IDS = "EXTRA_TRACK_IDS"
     }
 
     @Inject lateinit var playlistDao: PlaylistDao
@@ -56,6 +59,8 @@ class AudioPlayerService : Service() {
     private var currentIndex = 0
     private val _currentTrackFlow = MutableStateFlow<Track?>(null)
     val currentTrackFlow: StateFlow<Track?> = _currentTrackFlow
+    private val _isPlayingFlow = MutableStateFlow(false)
+    val isPlayingFlow: StateFlow<Boolean> = _isPlayingFlow
 
     private lateinit var mediaSession: MediaSessionCompat
     private val playbackStateBuilder = PlaybackStateCompat.Builder()
@@ -96,6 +101,21 @@ class AudioPlayerService : Service() {
                 ACTION_NEXT -> mediaSession.controller.transportControls.skipToNext()
                 ACTION_PREV -> mediaSession.controller.transportControls.skipToPrevious()
                 ACTION_STOP -> mediaSession.controller.transportControls.stop()
+                ACTION_PLAY_TRACKS -> {
+                    val playlistId = intent.getIntArrayExtra(EXTRA_TRACK_IDS)
+                    if (playlistId?.isNotEmpty() == true) {
+                        serviceScope.launch {
+                            trackList = playlistDao.loadAllTracksByIds(playlistId)
+                            currentIndex = 0
+                            if (trackList.isNotEmpty()) {
+                                playTrack(currentIndex)
+                            }
+                        }
+                    } else {
+                        mediaSession.controller.transportControls.stop()
+                    }
+                }
+                else -> super.onStartCommand(intent, flags, startId)
             }
         }
         return START_STICKY
@@ -176,6 +196,7 @@ class AudioPlayerService : Service() {
             val duration = mediaPlayer?.duration?.toLong() ?: 0L
             val state =
                 if (isPlaying) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED
+            _isPlayingFlow.value = isPlaying
 
             playbackStateBuilder
                 .setActions(
@@ -274,10 +295,5 @@ class AudioPlayerService : Service() {
         mediaSession.release()
         serviceScope.cancel()
         super.onDestroy()
-    }
-
-    fun getCurrentTrack(): Track? {
-        if (trackList.isEmpty()) return null
-        return trackList[currentIndex]
     }
 }

@@ -30,9 +30,9 @@ fun TracksScreen(
     var trackToAdd by remember { mutableStateOf<Track?>(null) }
     var trackToDelete by remember { mutableStateOf<Track?>(null) }
 
-    playlistWithTracks?.let {
+    playlistWithTracks?.let { playlist ->
         TracksView(
-            playlistWithTracks = it,
+            playlistWithTracks = playlist,
             onRemoveFromPlaylist = { track ->
                 viewModel.removeTrackFromPlaylist(track.trackId, playlistId)
             },
@@ -45,10 +45,7 @@ fun TracksScreen(
             onAddTrackToPlaylist = { trackId, targetPlaylistId ->
                 viewModel.addTrackToPlaylist(trackId, targetPlaylistId)
             },
-            onPlayAll = { trackList ->
-                // TODO: Implement logic to play the list of tracks
-                println("Playing all: ${trackList.map { it.trackName }}")
-            }
+            onPlayAll = { viewModel.playAllTracks(it) }
         )
     }
 

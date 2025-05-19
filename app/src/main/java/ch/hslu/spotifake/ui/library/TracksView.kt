@@ -58,9 +58,7 @@ fun TracksView(
             } else {
                 PlaybackControls(
                     playlistWithTracks = playlistWithTracks,
-                    onPlayAll = { tracks ->
-                        // TODO
-                    },
+                    onPlayAll = onPlayAll,
                     modifier = Modifier.align(Alignment.TopEnd)
                 )
 
