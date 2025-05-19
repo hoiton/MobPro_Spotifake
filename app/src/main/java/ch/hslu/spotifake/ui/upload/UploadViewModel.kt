@@ -11,7 +11,10 @@ import ch.hslu.spotifake.db.Track
 import ch.hslu.spotifake.db.MusicDatabase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -21,6 +24,8 @@ class UploadViewModel @Inject constructor(
     application: Application,
     private val lastFm: LastFmService
 ) : AndroidViewModel(application) {
+    private val DEFAULT_ART_URL = "https://f4.bcbits.com/img/a0768625472_16.jpg"
+
     private val _trackName = MutableStateFlow("")
     val trackName: StateFlow<String> = _trackName
 
@@ -31,7 +36,13 @@ class UploadViewModel @Inject constructor(
     val selectedFileName: StateFlow<String?> = _selectedFileName
 
     private val _selectedAlbumArtUrl = MutableStateFlow<String?>(null)
-    val selectedAlbumArtUrl: StateFlow<String?> = _selectedAlbumArtUrl
+    val selectedAlbumArtUrl: StateFlow<String> = _selectedAlbumArtUrl
+        .map { it ?: DEFAULT_ART_URL }
+        .stateIn(
+            scope       = viewModelScope,
+            started     = SharingStarted.WhileSubscribed(5_000),
+            initialValue = DEFAULT_ART_URL
+        )
 
     private var _selectedFileUri: Uri? = null
 
@@ -73,14 +84,12 @@ class UploadViewModel @Inject constructor(
         if (_trackName.value.isNotEmpty() && _artistName.value.isNotEmpty()) {
             viewModelScope.launch {
                 val imageUrl = lastFm.getLargestAlbumArtUrl(_artistName.value, _trackName.value)
-                if (imageUrl != null) {
-                    _selectedAlbumArtUrl.value = imageUrl
-                }
+                _selectedAlbumArtUrl.value = imageUrl
             }
         }
     }
 
-    fun uploadTrack() {
+    fun saveTrack() {
         viewModelScope.launch {
             val name = _trackName.value
             val artist = _artistName.value
@@ -105,7 +114,7 @@ class UploadViewModel @Inject constructor(
             }
 
             val track = Track(
-                0, _trackName.value, _artistName.value, "https://lastfm.freetls.fastly.net/i/u/770x0/0cc48bdf9e22bf52c4d91b9f66873319.jpg", storageFile.path
+                0, _trackName.value, _artistName.value, _selectedAlbumArtUrl.value, storageFile.path
             )
             val db = MusicDatabase.getDatabase(application)
             db.playlistDao().insertTrack(track)
