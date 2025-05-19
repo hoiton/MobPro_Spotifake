@@ -11,10 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.outlined.List
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -53,23 +50,17 @@ class MainActivity : ComponentActivity() {
                 val navigationItems = remember {
                     mutableStateListOf(
                         BottomNavigationItem(
-                            route = SpotifakeScreens.Player.name,
-                            title = SpotifakeScreens.Player.name,
-                            selectedIcon = Icons.Filled.PlayArrow,
-                            unselectedIcon = Icons.Outlined.PlayArrow,
-                        ),
-                        BottomNavigationItem(
-                            route = SpotifakeScreens.Library.name,
+                            route = SpotifakeScreens.Library.route,
                             title = SpotifakeScreens.Library.name,
                             selectedIcon = Icons.AutoMirrored.Filled.List,
                             unselectedIcon = Icons.AutoMirrored.Outlined.List,
                         ),
                         BottomNavigationItem(
-                            route = SpotifakeScreens.Upload.name,
-                            title = SpotifakeScreens.Upload.name,
-                            selectedIcon = Icons.Filled.Add,
-                            unselectedIcon = Icons.Outlined.Add
-                        )
+                            route = SpotifakeScreens.Playlists.route,
+                            title = SpotifakeScreens.Playlists.name,
+                            selectedIcon = Icons.Default.FolderOpen,
+                            unselectedIcon = Icons.Default.FolderOpen,
+                        ),
                     )
                 }
 
@@ -77,9 +68,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     bottomBar = {
                         Column {
-                            if (currentRoute != SpotifakeScreens.Player.name) {
+                            if (currentRoute != SpotifakeScreens.Player.route) {
                                 MiniPlayer(
-                                    onClick = { navController.navigate(SpotifakeScreens.Player.name) }
+                                    onClick = { navController.navigate(SpotifakeScreens.Player.route) }
                                 )
                             }
                             BottomNavigation(
@@ -106,16 +97,26 @@ fun SpotifakeNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = SpotifakeScreens.Player.name,
+        startDestination = SpotifakeScreens.Library.route,
         modifier = modifier,
     ) {
-        composable(route = SpotifakeScreens.Player.name) {
+        composable(route = SpotifakeScreens.Player.route) {
             PlayerView()
         }
-        composable(route = SpotifakeScreens.Upload.name) {
-            UploadView()
+        composable(route = SpotifakeScreens.Upload.route) {
+            UploadView(
+                navHostController = navController,
+            )
         }
         composable(route = SpotifakeScreens.Library.route) {
+            TracksScreen(
+                playlistId = 0,
+                viewModel = hiltViewModel(),
+                navHostController = navController,
+                isPrimaryLibrary = true,
+            )
+        }
+        composable(route = SpotifakeScreens.Playlists.route) {
             val viewModel: LibraryViewModel = hiltViewModel()
             PlaylistScreen(
                 viewModel = viewModel,
@@ -133,7 +134,8 @@ fun SpotifakeNavHost(
             TracksScreen(
                 viewModel = viewModel,
                 playlistId = playlistId,
-                onBack = { navController.navigateUp() }
+                navHostController = navController,
+                isPrimaryLibrary = false,
             )
         }
     }

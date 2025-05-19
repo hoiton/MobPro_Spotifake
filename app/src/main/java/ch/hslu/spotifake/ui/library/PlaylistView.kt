@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ch.hslu.spotifake.db.Playlist
 import ch.hslu.spotifake.db.PlaylistWithTracks
@@ -51,9 +52,9 @@ fun PlaylistView(
     onShowCreateDialog: () -> Unit,
     onDeletePlaylist: (Playlist) -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize()) { // changed to Box to overlay FAB
+    Box(modifier = Modifier.fillMaxSize()) {
 
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column {
             if (showCreateDialog) {
                 CreatePlaylistDialog(
                     onCreate = {
@@ -64,10 +65,13 @@ fun PlaylistView(
                 )
             }
 
-            Text("My Library", style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "Playlists",
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
+            )
 
-            LazyColumn(modifier = Modifier.fillMaxSize()) {  // fillMaxSize so it uses all space
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
                 item {
                     likedSongsPlaylist?.playlist?.let {
                         Card(

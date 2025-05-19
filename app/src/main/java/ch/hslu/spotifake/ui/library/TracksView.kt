@@ -11,9 +11,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MusicOff
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ch.hslu.spotifake.db.PlaylistWithTracks
 import ch.hslu.spotifake.db.Track
@@ -31,19 +33,24 @@ fun TracksView(
     playlistWithTracks: PlaylistWithTracks,
     onRemoveFromPlaylist: (Track) -> Unit,
     onDeleteTrack: (Track) -> Unit,
-    onBack: () -> Unit,
     dialogState: Pair<Boolean, Track?>,
     onDialogDismiss: () -> Unit,
     onTrackSelectedToAdd: (Track?) -> Unit,
     playlists: List<PlaylistWithTracks>,
     onAddTrackToPlaylist: (Int, Int) -> Unit,
     onPlayAll: (List<Track>) -> Unit,
-    onPlayTrack: (List<Track>, Int) -> Unit
+    onPlayTrack: (List<Track>, Int) -> Unit,
+    onAddTrack: () -> Unit,
+    isPrimaryLibrary: Boolean,
 ) {
     val (showDialog, trackToAdd) = dialogState
 
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text("${playlistWithTracks.playlist.playlistName}", style = MaterialTheme.typography.titleLarge)
+    Column {
+        Text(
+            text = playlistWithTracks.playlist.playlistName,
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
+        )
         Spacer(Modifier.height(8.dp))
 
         Box(modifier = Modifier.fillMaxSize()) {
@@ -57,32 +64,49 @@ fun TracksView(
                     Text("Pretty lonely in here...", color = Color.Gray)
                 }
             } else {
-                PlaybackControls(
-                    playlistWithTracks = playlistWithTracks,
-                    onPlayAll = onPlayAll,
-                    modifier = Modifier.align(Alignment.TopEnd)
-                )
-
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = 76.dp)
+                Column (
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    items(playlistWithTracks.tracks.size) { index ->
-                        val track = playlistWithTracks.tracks[index]
-                        TrackItem(
+                    if (!isPrimaryLibrary){
+                        PlaybackControls(
                             playlistWithTracks = playlistWithTracks,
-                            index = index,
-                            track = track,
-                            playlistId = playlistWithTracks.playlist.playlistId,
-                            onAddToPlaylist = { onTrackSelectedToAdd(track) },
-                            onRemoveFromPlaylist = { onRemoveFromPlaylist(track) },
-                            onDelete = { onDeleteTrack(track) },
-                            onPlayClick = onPlayTrack
+                            onPlayAll = onPlayAll,
+                            modifier = Modifier.fillMaxWidth()
                         )
+                    }
+
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        items(playlistWithTracks.tracks.size) { index ->
+                            val track = playlistWithTracks.tracks[index]
+                            TrackItem(
+                                playlistWithTracks = playlistWithTracks,
+                                index = index,
+                                track = track,
+                                playlistId = playlistWithTracks.playlist.playlistId,
+                                onAddToPlaylist = { onTrackSelectedToAdd(track) },
+                                onRemoveFromPlaylist = { onRemoveFromPlaylist(track) },
+                                onDelete = { onDeleteTrack(track) },
+                                onPlayClick = onPlayTrack
+                            )
+                        }
                     }
                 }
             }
+
+            if (isPrimaryLibrary) {
+                FloatingActionButton(
+                    onClick = onAddTrack,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add new Track")
+                }
+            }
+
 
             if (showDialog && trackToAdd != null) {
                 AlertDialog(
@@ -96,7 +120,10 @@ fun TracksView(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            onAddTrackToPlaylist(trackToAdd.trackId, playlist.playlist.playlistId)
+                                            onAddTrackToPlaylist(
+                                                trackToAdd.trackId,
+                                                playlist.playlist.playlistId
+                                            )
                                             onDialogDismiss()
                                         }
                                         .padding(8.dp)
@@ -111,17 +138,6 @@ fun TracksView(
                         }
                     }
                 )
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            Button(
-                onClick = onBack,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-            ) {
-                Text("Back to Playlists")
             }
         }
     }

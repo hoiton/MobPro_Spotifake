@@ -87,15 +87,11 @@ class UploadViewModel @Inject constructor(
         }
     }
 
-    fun saveTrack() {
+    fun saveTrack(onSuccess: () -> Unit) {
         viewModelScope.launch {
-            val name = _trackName.value
-            val artist = _artistName.value
             val uri = _selectedFileUri ?: return@launch
 
             val application = getApplication<Application>()
-            val cr = application.contentResolver
-
             val filesDir = application.filesDir
 
             val safeName = _selectedFileName.value
@@ -121,6 +117,7 @@ class UploadViewModel @Inject constructor(
             _artistName.value = ""
             _selectedFileName.value = null
             _selectedFileUri = null
+            onSuccess()
         }
     }
 }

@@ -37,10 +37,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 
 @Composable
 fun UploadView(
+    navHostController: NavHostController,
     viewModel: UploadViewModel = hiltViewModel()
 ) {
     val trackName by viewModel.trackName.collectAsState()
@@ -64,7 +66,7 @@ fun UploadView(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Text(
-                text = "Save a New Track",
+                text = "Add a New Track",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
             )
 
@@ -132,7 +134,7 @@ fun UploadView(
             }
 
             Button(
-                onClick = viewModel::saveTrack,
+                onClick = { viewModel.saveTrack(navHostController::popBackStack) },
                 enabled = trackName.isNotBlank() && artistName.isNotBlank() && !selectedFileName.isNullOrBlank(),
                 modifier = Modifier
                     .fillMaxWidth()

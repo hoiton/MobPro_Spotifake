@@ -11,13 +11,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.navigation.NavHostController
+import ch.hslu.spotifake.SpotifakeNavHost
 import ch.hslu.spotifake.db.Track
+import ch.hslu.spotifake.ui.navigation.SpotifakeScreens
 
 @Composable
 fun TracksScreen(
+    navHostController: NavHostController,
     viewModel: LibraryViewModel,
     playlistId: Int,
-    onBack: () -> Unit
+    isPrimaryLibrary: Boolean,
 ) {
     val playlistFlow = remember(playlistId) {
         if (playlistId == 0) viewModel.getAllTracks()
@@ -37,7 +41,6 @@ fun TracksScreen(
                 viewModel.removeTrackFromPlaylist(track.trackId, playlistId)
             },
             onDeleteTrack = { trackToDelete = it },
-            onBack = onBack,
             dialogState = showDialog to trackToAdd,
             onDialogDismiss = { showDialog = false; trackToAdd = null },
             onTrackSelectedToAdd = { trackToAdd = it; showDialog = true },
@@ -46,7 +49,9 @@ fun TracksScreen(
                 viewModel.addTrackToPlaylist(trackId, targetPlaylistId)
             },
             onPlayAll = { viewModel.playAllTracks(it) },
-            onPlayTrack = { tracks, index -> viewModel.playTrack(tracks, index) }
+            onPlayTrack = { tracks, index -> viewModel.playTrack(tracks, index) },
+            onAddTrack = { navHostController.navigate(SpotifakeScreens.Upload.route) },
+            isPrimaryLibrary = isPrimaryLibrary,
         )
     }
 
