@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Spotifake</string>
+    <string name="foreground_service_description">Foreground service for playback of tracks</string>
 </resources>
