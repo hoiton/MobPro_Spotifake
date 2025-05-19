@@ -1,71 +1,28 @@
 package ch.hslu.spotifake.ui.player
 
-import android.annotation.SuppressLint
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
-import android.os.IBinder
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import ch.hslu.spotifake.business.AudioPlayerService
+import ch.hslu.spotifake.business.PlaybackRepository
 import ch.hslu.spotifake.db.Track
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    playbackRepo: PlaybackRepository,
 ) : ViewModel() {
 
-    @SuppressLint("StaticFieldLeak")
-    private var service: AudioPlayerService? = null
-
-    private val _currentTrack = MutableStateFlow<Track?>(null)
-    val currentTrack: StateFlow<Track?> = _currentTrack
-
-    private val _isPlaying = MutableStateFlow(false)
-    val isPlaying: StateFlow<Boolean> = _isPlaying
-
-    private val connection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
-            service = (binder as AudioPlayerService.LocalBinder).getService()
-            service?.currentTrackFlow
-                ?.onEach { _currentTrack.value = it }
-                ?.launchIn(viewModelScope)
-            service?.isPlayingFlow
-                ?.onEach { _isPlaying.value = it }
-                ?.launchIn(viewModelScope)
-        }
-        override fun onServiceDisconnected(name: ComponentName?) {
-            service = null
-        }
-    }
-
-    init {
-        Intent(context, AudioPlayerService::class.java).also { intent ->
-            context.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-            context.startService(intent)
-        }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        service?.let {
-            context.unbindService(connection)
-        }
-    }
+    val currentTrack: StateFlow<Track?> = playbackRepo.currentTrack
+    val isPlaying: StateFlow<Boolean> = playbackRepo.isPlaying
 
     fun playOrPause() {
-        service?.let {
-            val action = AudioPlayerService.ACTION_PLAY_PAUSE
-            context.startService(Intent(context, AudioPlayerService::class.java).setAction(action))
-        }
+        val action = AudioPlayerService.ACTION_PLAY_PAUSE
+        context.startService(Intent(context, AudioPlayerService::class.java).setAction(action))
     }
     fun next() = context.startService(
         Intent(context, AudioPlayerService::class.java).setAction(AudioPlayerService.ACTION_NEXT)

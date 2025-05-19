@@ -13,7 +13,6 @@ data class Track (
     @ColumnInfo(name = "file_uri") val fileURI: String
 ) {
     companion object {
-//        const val DEFAULT_COVER_URL = "https://f4.bcbits.com/img/a0768625472_16.jpg"
-        const val DEFAULT_COVER_URL = "https://lastfm.freetls.fastly.net/i/u/770x0/0cc48bdf9e22bf52c4d91b9f66873319.jpg"
+        const val DEFAULT_COVER_URL = "https://cdn.iconscout.com/icon/free/png-256/free-data-not-found-icon-download-in-svg-png-gif-file-formats--drive-full-storage-empty-state-pack-miscellaneous-icons-1662569.png"
     }
 }

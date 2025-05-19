@@ -29,8 +29,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -53,14 +51,11 @@ class AudioPlayerService : Service() {
     }
 
     @Inject lateinit var playlistDao: PlaylistDao
+    @Inject lateinit var playbackRepo: PlaybackRepository
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var trackList: List<Track> = emptyList()
     private var currentIndex = 0
-    private val _currentTrackFlow = MutableStateFlow<Track?>(null)
-    val currentTrackFlow: StateFlow<Track?> = _currentTrackFlow
-    private val _isPlayingFlow = MutableStateFlow(false)
-    val isPlayingFlow: StateFlow<Boolean> = _isPlayingFlow
 
     private lateinit var mediaSession: MediaSessionCompat
     private val playbackStateBuilder = PlaybackStateCompat.Builder()
@@ -165,7 +160,7 @@ class AudioPlayerService : Service() {
 
     private fun playTrack(index: Int) {
         val track = trackList[index]
-        _currentTrackFlow.value = track
+        playbackRepo.updateCurrentTrack(track)
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer().apply {
             setDataSource(this@AudioPlayerService, Uri.parse(track.fileURI))
@@ -196,7 +191,7 @@ class AudioPlayerService : Service() {
             val duration = mediaPlayer?.duration?.toLong() ?: 0L
             val state =
                 if (isPlaying) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED
-            _isPlayingFlow.value = isPlaying
+            playbackRepo.updateIsPlaying(isPlaying)
 
             playbackStateBuilder
                 .setActions(
