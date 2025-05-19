@@ -56,7 +56,7 @@ class LibraryViewModel @Inject constructor(
     fun getAllTracks(): Flow<PlaylistWithTracks> {
         return dao.getAllTracks().map { trackList ->
             PlaylistWithTracks(
-                playlist = Playlist(0, "Liked Songs"),
+                playlist = Playlist(0, "All Songs"),
                 tracks = trackList
             )
         }
@@ -71,7 +71,7 @@ class LibraryViewModel @Inject constructor(
     private suspend fun loadLikedSongsPlaylist(): PlaylistWithTracks {
         val tracksList = dao.getAllTracks().first()
         return PlaylistWithTracks(
-            playlist = Playlist(0, "Liked Songs"),
+            playlist = Playlist(0, "All Songs"),
             tracks = tracksList
         )
     }

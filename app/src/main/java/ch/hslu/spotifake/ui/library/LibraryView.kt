@@ -47,236 +47,79 @@ import ch.hslu.spotifake.db.Playlist
 import ch.hslu.spotifake.db.PlaylistWithTracks
 import ch.hslu.spotifake.db.Track
 
-
 @Composable
-fun LibraryView(
-    viewModel: LibraryViewModel = hiltViewModel()
-) {
-    var showCreateDialog by remember { mutableStateOf(false) }
+fun LibraryView(viewModel: LibraryViewModel = hiltViewModel()) {
     var selectedPlaylistId by remember { mutableStateOf<Int?>(null) }
+    var showCreateDialog by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }
     var trackToAdd by remember { mutableStateOf<Track?>(null) }
     var trackToDelete by remember { mutableStateOf<Track?>(null) }
 
+    val playlists by viewModel.allPlaylists.observeAsState(emptyList())
+    val likedSongsPlaylist by viewModel.likedSongsPlaylist.collectAsState(
+        initial = PlaylistWithTracks(playlist = Playlist(0, "All Songs"), tracks = emptyList())
+    )
+
     if (selectedPlaylistId == null) {
-
-        val playlists by viewModel.allPlaylists.observeAsState(emptyList())
-        val likedSongsPlaylist by viewModel.likedSongsPlaylist.collectAsState(
-            initial = PlaylistWithTracks(
-                playlist = Playlist(0, "Liked Songs"),
-                tracks = emptyList()
-            )
+        PlaylistView(
+            playlists = playlists,
+            likedSongsPlaylist = likedSongsPlaylist,
+            onCreatePlaylist = { viewModel.createPlaylist(it) },
+            onPlaylistClick = { selectedPlaylistId = it },
+            showCreateDialog = showCreateDialog,
+            onDismissCreateDialog = { showCreateDialog = false },
+            onShowCreateDialog = { showCreateDialog = true }
         )
-
-        Column(modifier = Modifier.padding(16.dp)) {
-            if (showCreateDialog) {
-                CreatePlaylistDialog(
-                    onCreate = { name ->
-                        viewModel.createPlaylist(name)
-                        showCreateDialog = false
-                    },
-                    onDismiss = { showCreateDialog = false }
-                )
-            }
-
-            Text("My Library", style = MaterialTheme.typography.titleLarge)
-
-            Spacer(Modifier.height(8.dp))
-
-            LazyColumn {
-                item {
-                    likedSongsPlaylist?.playlist?.let {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 6.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            elevation = CardDefaults.cardElevation(4.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Favorite,
-                                    contentDescription = "Track",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                )
-
-                                Text(
-                                    text = it.playlistName,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { selectedPlaylistId = 0 }
-                                        .padding(16.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-                items(playlists.size) {
-                    index ->
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        elevation = CardDefaults.cardElevation(4.dp)
-                    ) {
-                        Text(
-                            text = playlists[index].playlist.playlistName,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    selectedPlaylistId = playlists[index].playlist.playlistId
-                                }
-                                .padding(16.dp)
-                        )
-                    }
-                }
-            }
-
-            Box(modifier = Modifier.fillMaxSize()) {
-                FloatingActionButton(
-                    onClick = { showCreateDialog = true },
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(16.dp)
-                )
-                {
-                    Icon(Icons.Default.Add, contentDescription = "Add playlist")
-                }
-            }
-        }
     } else {
         val playlistFlow = remember(selectedPlaylistId) {
-            if(selectedPlaylistId == 0) {
-                viewModel.getAllTracks()
-            } else {
-                viewModel.getPlaylistWithTracks(selectedPlaylistId!!)
-            }
+            if (selectedPlaylistId == 0) viewModel.getAllTracks()
+            else viewModel.getPlaylistWithTracks(selectedPlaylistId!!)
         }
         val playlistWithTracks by playlistFlow.collectAsState(initial = null)
 
-        playlistWithTracks?.let { playlist ->
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("${playlist.playlist.playlistName}", style = MaterialTheme.typography.titleLarge)
-
-                Spacer(Modifier.height(8.dp))
-
-                Box(modifier = Modifier.fillMaxSize()) {
-                    if (playlist.tracks.isEmpty()) {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(Icons.Default.Face, contentDescription = null, tint = Color.Gray)
-                            Text("Pretty lonely in here...", color = Color.Gray)
-                        }
-                    }
-
-                    LazyColumn {
-                        items(playlist.tracks.size) { index ->
-                            TrackItem(
-                                track = playlist.tracks[index],
-                                playlistId = playlist.playlist.playlistId,
-                                onAddToPlaylist = {
-                                    trackToAdd = playlist.tracks[index]
-                                    showDialog = true
-                                },
-                                onRemoveFromPlaylist = {
-                                    viewModel.removeTrackFromPlaylist(
-                                        playlist.tracks[index].trackId,
-                                        playlist.playlist.playlistId
-                                    )
-                                },
-                                onDelete = {
-                                    trackToDelete = playlist.tracks[index]
-                                }
-                            )
-                        }
-                    }
-
-                    if (showDialog && trackToAdd != null) {
-                        AlertDialog(
-                            onDismissRequest = { showDialog = false },
-                            title = { Text("Add to Playlist") },
-                            text = {
-                                val playlists by viewModel.allPlaylists.observeAsState(emptyList())
-
-                                Column {
-                                    playlists.forEach { playlist ->
-                                        Text(
-                                            text = playlist.playlist.playlistName,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clickable {
-                                                    viewModel.addTrackToPlaylist(
-                                                        trackId = trackToAdd!!.trackId,
-                                                        playlistId = playlist.playlist.playlistId
-                                                    )
-                                                    showDialog = false
-                                                    trackToAdd = null
-                                                }
-                                                .padding(8.dp)
-                                        )
-                                    }
-                                }
-                            },
-                            confirmButton = {},
-                            dismissButton = {
-                                TextButton(onClick = {
-                                    showDialog = false
-                                    trackToAdd = null
-                                }) {
-                                    Text("Cancel")
-                                }
-                            }
-                        )
-                    }
-
-                    if (trackToDelete != null) {
-                        AlertDialog(
-                            onDismissRequest = { trackToDelete = null },
-                            title = { Text("Delete Track") },
-                            text = { Text("Are you sure you want to permanently delete \"${trackToDelete!!.trackName}\"?") },
-                            confirmButton = {
-                                TextButton(onClick = {
-                                    viewModel.deleteTrack(trackToDelete!!)
-                                    trackToDelete = null
-                                }) {
-                                    Text("Delete", color = Color.Red)
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { trackToDelete = null }) {
-                                    Text("Cancel")
-                                }
-                            }
-                        )
-                    }
-
-                    Spacer(Modifier.height(16.dp))
-
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        Button(
-                            onClick = { selectedPlaylistId = null },
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(16.dp)
-                        )
-                        {
-                            Text("Back to Playlists")
-                        }
-                    }
+        playlistWithTracks?.let {
+            TracksView(
+                playlistWithTracks = it,
+                onAddToPlaylist = { trackToAdd = it; showDialog = true },
+                onRemoveFromPlaylist = { track ->
+                    viewModel.removeTrackFromPlaylist(track.trackId, it.playlist.playlistId)
+                },
+                onDeleteTrack = { trackToDelete = it },
+                onBack = { selectedPlaylistId = null },
+                dialogState = showDialog to trackToAdd,
+                onDialogDismiss = { showDialog = false; trackToAdd = null },
+                onTrackSelectedToAdd = { trackToAdd = it; showDialog = true },
+                playlists = playlists,
+                onAddTrackToPlaylist = { trackId, playlistId ->
+                    viewModel.addTrackToPlaylist(trackId, playlistId)
                 }
-            }
+            )
         }
     }
+
+    // Delete confirmation dialog outside the conditionals
+    if (trackToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { trackToDelete = null },
+            title = { Text("Delete Track") },
+            text = { Text("Are you sure you want to permanently delete \"${trackToDelete!!.trackName}\"?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteTrack(trackToDelete!!)
+                    trackToDelete = null
+                }) {
+                    Text("Delete", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { trackToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
+
 
 @Composable
 fun CreatePlaylistDialog(
