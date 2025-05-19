@@ -51,92 +51,95 @@ fun PlaylistView(
     onShowCreateDialog: () -> Unit,
     onDeletePlaylist: (Playlist) -> Unit
 ) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        if (showCreateDialog) {
-            CreatePlaylistDialog(
-                onCreate = {
-                    onCreatePlaylist(it)
-                    onDismissCreateDialog()
-                },
-                onDismiss = onDismissCreateDialog
-            )
-        }
+    Box(modifier = Modifier.fillMaxSize()) { // changed to Box to overlay FAB
 
-        Text("My Library", style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(8.dp))
+        Column(modifier = Modifier.padding(16.dp)) {
+            if (showCreateDialog) {
+                CreatePlaylistDialog(
+                    onCreate = {
+                        onCreatePlaylist(it)
+                        onDismissCreateDialog()
+                    },
+                    onDismiss = onDismissCreateDialog
+                )
+            }
 
-        LazyColumn {
-            item {
-                likedSongsPlaylist?.playlist?.let {
+            Text("My Library", style = MaterialTheme.typography.titleLarge)
+            Spacer(Modifier.height(8.dp))
+
+            LazyColumn(modifier = Modifier.fillMaxSize()) {  // fillMaxSize so it uses all space
+                item {
+                    likedSongsPlaylist?.playlist?.let {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            elevation = CardDefaults.cardElevation(4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onPlaylistClick(0) }
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.Favorite, contentDescription = "Track",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(end = 12.dp)
+                                )
+                                Text(text = it.playlistName)
+                            }
+                        }
+                    }
+                }
+
+                items(playlists.size) { index ->
+                    val playlist = playlists[index]
+                    var showMenu by remember { mutableStateOf(false) }
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .combinedClickable(
+                                onClick = { onPlaylistClick(playlist.playlist.playlistId) },
+                                onLongClick = { showMenu = true }
+                            ),
                         shape = RoundedCornerShape(12.dp),
                         elevation = CardDefaults.cardElevation(4.dp)
                     ) {
-                        Row(
+                        Text(
+                            text = playlist.playlist.playlistName,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onPlaylistClick(0) }
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(16.dp)
+                        )
+
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
                         ) {
-                            Icon(Icons.Default.Favorite, contentDescription = "Track",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(end = 12.dp))
-                            Text(text = it.playlistName)
+                            DropdownMenuItem(
+                                text = { Text("Delete", color = Color.Red) },
+                                onClick = {
+                                    showMenu = false
+                                    onDeletePlaylist(playlist.playlist)
+                                }
+                            )
                         }
                     }
                 }
             }
-
-            items(playlists.size) { index ->
-                val playlist = playlists[index]
-                var showMenu by remember { mutableStateOf(false) }
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                        .combinedClickable(
-                            onClick = { onPlaylistClick(playlist.playlist.playlistId) },
-                            onLongClick = { showMenu = true }
-                        ),
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(4.dp)
-                ) {
-                    Text(
-                        text = playlist.playlist.playlistName,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    )
-
-                    DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Delete", color = Color.Red) },
-                            onClick = {
-                                showMenu = false
-                                onDeletePlaylist(playlist.playlist)
-                            }
-                        )
-                    }
-                }
-            }
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
-            FloatingActionButton(
-                onClick = onShowCreateDialog,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add playlist")
-            }
+        FloatingActionButton(
+            onClick = onShowCreateDialog,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Add playlist")
         }
     }
 }
