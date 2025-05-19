@@ -37,7 +37,8 @@ fun TracksView(
     onTrackSelectedToAdd: (Track?) -> Unit,
     playlists: List<PlaylistWithTracks>,
     onAddTrackToPlaylist: (Int, Int) -> Unit,
-    onPlayAll: (List<Track>) -> Unit
+    onPlayAll: (List<Track>) -> Unit,
+    onPlayTrack: (List<Track>, Int) -> Unit
 ) {
     val (showDialog, trackToAdd) = dialogState
 
@@ -70,11 +71,14 @@ fun TracksView(
                     items(playlistWithTracks.tracks.size) { index ->
                         val track = playlistWithTracks.tracks[index]
                         TrackItem(
+                            playlistWithTracks = playlistWithTracks,
+                            index = index,
                             track = track,
                             playlistId = playlistWithTracks.playlist.playlistId,
                             onAddToPlaylist = { onTrackSelectedToAdd(track) },
                             onRemoveFromPlaylist = { onRemoveFromPlaylist(track) },
-                            onDelete = { onDeleteTrack(track) }
+                            onDelete = { onDeleteTrack(track) },
+                            onPlayClick = onPlayTrack
                         )
                     }
                 }

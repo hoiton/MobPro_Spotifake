@@ -90,6 +90,18 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
+    fun playTrack(tracks: List<Track>, index: Int) {
+        Intent(context, AudioPlayerService::class.java).also {
+            it.action = AudioPlayerService.ACTION_PLAY_TRACKS
+            it.putExtra(
+                AudioPlayerService.EXTRA_TRACK_IDS,
+                tracks.map { track -> track.trackId }.toIntArray()
+            )
+            it.putExtra(AudioPlayerService.EXTRA_START_INDEX, index) // 👈 send the start index
+            context.startService(it)
+        }
+    }
+
     private suspend fun loadLikedSongsPlaylist(): PlaylistWithTracks {
         val tracksList = dao.getAllTracks().first()
         return PlaylistWithTracks(

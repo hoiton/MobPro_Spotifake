@@ -45,7 +45,8 @@ fun TracksScreen(
             onAddTrackToPlaylist = { trackId, targetPlaylistId ->
                 viewModel.addTrackToPlaylist(trackId, targetPlaylistId)
             },
-            onPlayAll = { viewModel.playAllTracks(it) }
+            onPlayAll = { viewModel.playAllTracks(it) },
+            onPlayTrack = { tracks, index -> viewModel.playTrack(tracks, index) }
         )
     }
 

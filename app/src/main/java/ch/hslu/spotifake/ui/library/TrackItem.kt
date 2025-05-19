@@ -1,5 +1,6 @@
 package ch.hslu.spotifake.ui.library
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,22 +25,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import ch.hslu.spotifake.db.PlaylistWithTracks
 import ch.hslu.spotifake.db.Track
 
 @Composable
 fun TrackItem(
+    playlistWithTracks: PlaylistWithTracks,
+    index: Int,
     track: Track,
     playlistId: Int?,
     onAddToPlaylist: () -> Unit,
     onRemoveFromPlaylist: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onPlayClick: (List<Track>, Int) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .clickable { onPlayClick(playlistWithTracks.tracks, index) },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(4.dp)
     ) {

@@ -48,6 +48,7 @@ class AudioPlayerService : Service() {
         const val ACTION_PLAY_TRACKS = "ACTION_PLAY_TRACKS"
 
         const val EXTRA_TRACK_IDS = "EXTRA_TRACK_IDS"
+        const val EXTRA_START_INDEX = "EXTRA_START_INDEX"
     }
 
     @Inject lateinit var playlistDao: PlaylistDao
@@ -98,10 +99,11 @@ class AudioPlayerService : Service() {
                 ACTION_STOP -> mediaSession.controller.transportControls.stop()
                 ACTION_PLAY_TRACKS -> {
                     val playlistId = intent.getIntArrayExtra(EXTRA_TRACK_IDS)
+                    val startIndex = intent.getIntExtra(EXTRA_START_INDEX, 0)
                     if (playlistId?.isNotEmpty() == true) {
                         serviceScope.launch {
                             trackList = playlistDao.loadAllTracksByIds(playlistId)
-                            currentIndex = 0
+                            currentIndex = startIndex
                             if (trackList.isNotEmpty()) {
                                 playTrack(currentIndex)
                             }
