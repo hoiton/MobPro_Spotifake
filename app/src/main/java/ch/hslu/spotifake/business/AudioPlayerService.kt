@@ -10,11 +10,15 @@ import android.graphics.Bitmap
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Binder
+import android.os.Bundle
 import android.os.IBinder
+import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
+import androidx.media.MediaBrowserServiceCompat
 import androidx.media.app.NotificationCompat.MediaStyle
 import ch.hslu.spotifake.MainActivity
 import ch.hslu.spotifake.db.PlaylistDao
@@ -35,7 +39,7 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class AudioPlayerService : Service() {
+class AudioPlayerService : MediaBrowserServiceCompat() {
 
     companion object {
         private const val CHANNEL_ID = "audio_playback_channel"
@@ -71,6 +75,7 @@ class AudioPlayerService : Service() {
         super.onCreate()
         createNotificationChannel()
         initMediaSession()
+        sessionToken = mediaSession.sessionToken
 
         serviceScope.launch {
             playlistDao.getAllTracks().collect { tracks ->
@@ -119,6 +124,33 @@ class AudioPlayerService : Service() {
         return START_STICKY
     }
 
+    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot {
+        return BrowserRoot("root", null)
+    }
+
+
+    override fun onLoadChildren(
+        parentId: String,
+        result: Result<MutableList<MediaBrowserCompat.MediaItem>>
+    ) {
+        if (parentId == "root") {
+            val items = trackList.map { track ->
+                MediaBrowserCompat.MediaItem(
+                    MediaDescriptionCompat.Builder()
+                        .setMediaId(track.trackId.toString())
+                        .setTitle(track.trackName)
+                        .setSubtitle(track.artist)
+                        .setIconUri(Uri.parse(track.cover))
+                        .build(),
+                    MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
+                )
+            }
+            result.sendResult(items.toMutableList())
+        } else {
+            result.sendResult(mutableListOf())
+        }
+    }
+
     override fun onTaskRemoved(rootIntent: Intent?) {
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -132,6 +164,14 @@ class AudioPlayerService : Service() {
     private fun initMediaSession() {
         mediaSession = MediaSessionCompat(this, "AudioPlayerService").apply {
             setCallback(object : MediaSessionCompat.Callback() {
+                override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
+                    val index = trackList.indexOfFirst { it.trackId.toString() == mediaId }
+                    if (index >= 0) {
+                        currentIndex = index
+                        playTrack(index)
+                        updateSession()
+                    }
+                }
                 override fun onPlay() = playPause()
                 override fun onPause() = playPause()
                 override fun onSkipToNext() = skipToNext()

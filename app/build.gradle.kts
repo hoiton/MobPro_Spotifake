@@ -17,7 +17,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        buildConfigField("String", "LASTFM_API_KEY", "\"${System.getenv("LASTFM_API_KEY")}\"")
+        buildConfigField("String", "LASTFM_API_KEY", "\"f80e715081b881a0f82faa5b2b84ebae\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

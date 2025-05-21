@@ -37,7 +37,15 @@
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON"/>
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+
         </service>
+
+        <meta-data
+            android:name="androidx.car.automotive.automotive_app"
+            android:resource="@xml/automotive_app_desc" />
     </application>
 
 </manifest>
