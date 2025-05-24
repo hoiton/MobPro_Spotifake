@@ -17,7 +17,7 @@ import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
 import androidx.media.app.NotificationCompat.MediaStyle
 import ch.hslu.spotifake.MainActivity
-import ch.hslu.spotifake.db.PlaylistDao
+import ch.hslu.spotifake.db.LibraryDao
 import ch.hslu.spotifake.db.Track
 import coil3.imageLoader
 import coil3.request.ImageRequest
@@ -51,7 +51,7 @@ class AudioPlayerService : Service() {
         const val EXTRA_START_INDEX = "EXTRA_START_INDEX"
     }
 
-    @Inject lateinit var playlistDao: PlaylistDao
+    @Inject lateinit var libraryDao: LibraryDao
     @Inject lateinit var playbackRepo: PlaybackRepository
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -73,7 +73,7 @@ class AudioPlayerService : Service() {
         initMediaSession()
 
         serviceScope.launch {
-            playlistDao.getAllTracks().collect { tracks ->
+            libraryDao.getAllTracks().collect { tracks ->
                 trackList = tracks
                 // Optional: reset index if list became empty or changed
                 if (currentIndex >= trackList.size) {
@@ -102,7 +102,7 @@ class AudioPlayerService : Service() {
                     val startIndex = intent.getIntExtra(EXTRA_START_INDEX, 0)
                     if (playlistId?.isNotEmpty() == true) {
                         serviceScope.launch {
-                            trackList = playlistDao.loadAllTracksByIds(playlistId)
+                            trackList = libraryDao.loadAllTracksByIds(playlistId)
                             currentIndex = startIndex
                             if (trackList.isNotEmpty()) {
                                 playTrack(currentIndex)
@@ -148,7 +148,7 @@ class AudioPlayerService : Service() {
     private fun playPause() {
         if (mediaPlayer == null) {
             serviceScope.launch {
-                trackList = playlistDao.getAllTracks().first()
+                trackList = libraryDao.getAllTracks().first()
                 if (trackList.isEmpty()) return@launch
                 playTrack(currentIndex)
                 updateSession()

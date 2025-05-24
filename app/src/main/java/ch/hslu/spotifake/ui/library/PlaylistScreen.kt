@@ -16,7 +16,7 @@ import ch.hslu.spotifake.db.PlaylistWithTracks
 
 @Composable
 fun PlaylistScreen(
-    viewModel: LibraryViewModel,
+    viewModel: PlaylistViewModel,
     onPlaylistSelected: (Int) -> Unit
 ) {
     val playlists by viewModel.allPlaylists.observeAsState(emptyList())

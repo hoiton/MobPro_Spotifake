@@ -10,7 +10,7 @@ import kotlinx.coroutines.asExecutor
 @Database(entities = [Track::class, Playlist::class, PlaylistTrackCrossReference::class],
     version = 1)
 abstract class MusicDatabase: RoomDatabase() {
-    abstract fun playlistDao(): PlaylistDao
+    abstract fun playlistDao(): LibraryDao
 
     companion object {
         private const val DB_NAME = "music-database"

@@ -29,9 +29,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import ch.hslu.spotifake.ui.library.LibraryViewModel
 import ch.hslu.spotifake.ui.library.PlaylistScreen
+import ch.hslu.spotifake.ui.library.PlaylistViewModel
 import ch.hslu.spotifake.ui.library.TracksScreen
+import ch.hslu.spotifake.ui.library.TracksViewModel
 import ch.hslu.spotifake.ui.navigation.BottomNavigation
 import ch.hslu.spotifake.ui.navigation.BottomNavigationItem
 import ch.hslu.spotifake.ui.navigation.SpotifakeScreens
@@ -144,7 +145,7 @@ fun SpotifakeNavHost(
             )
         }
         composable(route = SpotifakeScreens.Playlists.route) {
-            val viewModel: LibraryViewModel = hiltViewModel()
+            val viewModel: PlaylistViewModel = hiltViewModel()
             PlaylistScreen(
                 viewModel = viewModel,
                 onPlaylistSelected = { playlistId ->
@@ -157,7 +158,7 @@ fun SpotifakeNavHost(
             arguments = listOf(navArgument("playlistId") { type = NavType.IntType })
         ) { backStackEntry ->
             val playlistId = backStackEntry.arguments?.getInt("playlistId") ?: return@composable
-            val viewModel: LibraryViewModel = hiltViewModel()
+            val viewModel: TracksViewModel = hiltViewModel()
             TracksScreen(
                 viewModel = viewModel,
                 playlistId = playlistId,

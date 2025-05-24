@@ -3,7 +3,7 @@ package ch.hslu.spotifake.di
 import android.content.Context
 import androidx.room.Room
 import ch.hslu.spotifake.db.MusicDatabase
-import ch.hslu.spotifake.db.PlaylistDao
+import ch.hslu.spotifake.db.LibraryDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,7 +26,7 @@ object DatabaseModule {
     }
 
     @Provides
-    fun provideMyDao(database: MusicDatabase): PlaylistDao {
+    fun provideMyDao(database: MusicDatabase): LibraryDao {
         return database.playlistDao()
     }
 }

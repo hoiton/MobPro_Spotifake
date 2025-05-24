@@ -12,14 +12,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavHostController
-import ch.hslu.spotifake.SpotifakeNavHost
 import ch.hslu.spotifake.db.Track
 import ch.hslu.spotifake.ui.navigation.SpotifakeScreens
 
 @Composable
 fun TracksScreen(
     navHostController: NavHostController,
-    viewModel: LibraryViewModel,
+    viewModel: TracksViewModel,
     playlistId: Int,
     isPrimaryLibrary: Boolean,
 ) {
