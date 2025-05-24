@@ -4,33 +4,31 @@ import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import ch.hslu.spotifake.business.AudioPlayerService
 import ch.hslu.spotifake.db.Playlist
-import ch.hslu.spotifake.db.PlaylistDao
+import ch.hslu.spotifake.db.LibraryDao
 import ch.hslu.spotifake.db.PlaylistTrackCrossReference
 import ch.hslu.spotifake.db.PlaylistWithTracks
 import ch.hslu.spotifake.db.Track
+import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @HiltViewModel
-class LibraryViewModel @Inject constructor(
+class TracksViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    playlistDao: PlaylistDao
+    libraryDao: LibraryDao
 ) : ViewModel() {
-    private val dao = playlistDao
+    private val dao = libraryDao
 
     private val _likedSongsPlaylist = MutableStateFlow<PlaylistWithTracks?>(null)
-    val likedSongsPlaylist: StateFlow<PlaylistWithTracks?> = _likedSongsPlaylist
     val allPlaylists: LiveData<List<PlaylistWithTracks>> = dao.getAllPlaylistsWithTracks().asLiveData()
 
     init {
@@ -38,10 +36,6 @@ class LibraryViewModel @Inject constructor(
             val playlist = loadLikedSongsPlaylist()
             _likedSongsPlaylist.value = playlist
         }
-    }
-
-    fun createPlaylist(name: String) = viewModelScope.launch {
-        dao.insertPlaylist(Playlist(playlistId = 0, playlistName = name))
     }
 
     fun addTrackToPlaylist(trackId: Int, playlistId: Int) = viewModelScope.launch {
@@ -73,12 +67,6 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
-    fun deletePlaylist(playlist: Playlist) {
-        viewModelScope.launch {
-            dao.deletePlaylist(playlist)
-        }
-    }
-
     fun playAllTracks(tracks: List<Track>) {
         Intent(context, AudioPlayerService::class.java).also {
             it.action = AudioPlayerService.ACTION_PLAY_TRACKS
@@ -97,7 +85,7 @@ class LibraryViewModel @Inject constructor(
                 AudioPlayerService.EXTRA_TRACK_IDS,
                 tracks.map { track -> track.trackId }.toIntArray()
             )
-            it.putExtra(AudioPlayerService.EXTRA_START_INDEX, index) // 👈 send the start index
+            it.putExtra(AudioPlayerService.EXTRA_START_INDEX, index)
             context.startService(it)
         }
     }

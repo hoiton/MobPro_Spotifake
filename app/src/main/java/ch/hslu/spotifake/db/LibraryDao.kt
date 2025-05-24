@@ -9,7 +9,7 @@ import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface PlaylistDao {
+interface LibraryDao {
     @Query("SELECT * FROM track")
     fun getAllTracks(): Flow<List<Track>>
 
