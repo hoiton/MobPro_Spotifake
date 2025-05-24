@@ -14,11 +14,13 @@ import javax.inject.Inject
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    playbackRepo: PlaybackRepository,
+    private val playbackRepo: PlaybackRepository,
 ) : ViewModel() {
 
     val currentTrack: StateFlow<Track?> = playbackRepo.currentTrack
     val isPlaying: StateFlow<Boolean> = playbackRepo.isPlaying
+    val isShuffle: StateFlow<Boolean> = playbackRepo.shuffle
+    val isRepeat: StateFlow<Boolean> = playbackRepo.repeat
 
     fun playOrPause() {
         val action = AudioPlayerService.ACTION_PLAY_PAUSE
@@ -30,4 +32,12 @@ class PlayerViewModel @Inject constructor(
     fun prev() = context.startService(
         Intent(context, AudioPlayerService::class.java).setAction(AudioPlayerService.ACTION_PREV)
     )
+
+    fun shuffle() {
+        playbackRepo.toggleShuffle()
+    }
+
+    fun repeat() {
+        playbackRepo.toggleRepeat()
+    }
 }

@@ -12,11 +12,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,6 +55,8 @@ fun PlayerView(
 ){
     val currentTrack by viewModel.currentTrack.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
+    val isShuffle by viewModel.isShuffle.collectAsState()
+    val isRepeat by viewModel.isRepeat.collectAsState()
     PlayerScreen(
         albumArtUrl = currentTrack?.cover ?: Track.DEFAULT_COVER_URL,
         title = currentTrack?.trackName ?: "Song Title",
@@ -60,7 +64,11 @@ fun PlayerView(
         playPause = { viewModel.playOrPause() },
         previous = { viewModel.prev() },
         next = { viewModel.next() },
-        isPlaying = isPlaying
+        isPlaying = isPlaying,
+        shuffle = { viewModel.shuffle() },
+        isShuffle = isShuffle,
+        repeat = { viewModel.repeat() },
+        isRepeat = isRepeat
         )
 }
 
@@ -73,6 +81,10 @@ fun PlayerScreen(
     previous: () -> Unit,
     next: () -> Unit = {},
     isPlaying: Boolean = false,
+    shuffle: () -> Unit = {},
+    isShuffle: Boolean = false,
+    repeat: () -> Unit = {},
+    isRepeat: Boolean = false
 ) {
     Column(
         modifier = Modifier
@@ -119,7 +131,11 @@ fun PlayerScreen(
                 playPause = playPause,
                 previous = previous,
                 next = next,
-                isPlaying = isPlaying
+                isPlaying = isPlaying,
+                shuffle = shuffle,
+                isShuffle = isShuffle,
+                repeat = repeat,
+                isRepeat = isRepeat
             )
         }
     }
@@ -131,7 +147,13 @@ fun PlayerControls(
     previous: () -> Unit,
     next: () -> Unit = {},
     isPlaying: Boolean = false,
-    ) {
+    shuffle: () -> Unit = {},
+    isShuffle: Boolean = false,
+    repeat: () -> Unit = {},
+    isRepeat: Boolean = false
+) {
+    val activeColor = MaterialTheme.colorScheme.primary
+    val inactiveColor = LocalContentColor.current.copy(alpha = 0.6f)
 
     Row(
         modifier = Modifier
@@ -140,27 +162,40 @@ fun PlayerControls(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = { previous() }) {
+        IconButton(onClick = shuffle) {
+            Icon(
+                imageVector = Icons.Default.Shuffle,
+                contentDescription = "Shuffle",
+                tint = if (isShuffle) activeColor else inactiveColor
+            )
+        }
+
+        IconButton(onClick = previous) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                 contentDescription = "Previous"
             )
         }
 
-        IconButton(onClick = {
-            playPause()
-        }) {
-            if (isPlaying) {
-                Icon(Icons.Default.Pause, contentDescription = "Pause")
-            } else {
-                Icon(Icons.Default.PlayArrow, contentDescription = "Play")
-            }
+        IconButton(onClick = playPause) {
+            Icon(
+                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                contentDescription = if (isPlaying) "Pause" else "Play"
+            )
         }
 
-        IconButton(onClick = { next() }) {
+        IconButton(onClick = next) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = "Next"
+            )
+        }
+
+        IconButton(onClick = repeat) {
+            Icon(
+                imageVector = Icons.Default.Repeat,
+                contentDescription = "Repeat",
+                tint = if (isRepeat) activeColor else inactiveColor
             )
         }
     }

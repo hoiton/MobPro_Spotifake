@@ -51,7 +51,7 @@ fun TracksView(
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
             modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
         )
-        Spacer(Modifier.height(8.dp))
+//        Spacer(Modifier.height(8.dp))
 
         Box(modifier = Modifier.fillMaxSize()) {
             if (playlistWithTracks.tracks.isEmpty()) {

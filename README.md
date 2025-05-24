@@ -17,3 +17,9 @@ and then create an API key on [lastFM API](https://www.last.fm/api/).
 - [x] Add progress bar
 - [ ] Add progress control
 - [ ] Add editable Cover Art?
+
+- [ ] Bottom Navigation Selection: Playlist-Detail
+- [ ] Title Bar
+- [x] Shuffle
+- [x] Repeat
+- [ ] Search

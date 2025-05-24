@@ -60,11 +60,13 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var trackList: List<Track> = emptyList()
+    private var originalTrackList: List<Track> = emptyList()
     private var currentIndex = 0
 
     private lateinit var mediaSession: MediaSessionCompat
     private val playbackStateBuilder = PlaybackStateCompat.Builder()
     private var mediaPlayer: MediaPlayer? = null
+
 
     inner class LocalBinder : Binder() {
         fun getService(): AudioPlayerService = this@AudioPlayerService
@@ -80,10 +82,16 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
         serviceScope.launch {
             libraryDao.getAllTracks().collect { tracks ->
                 trackList = tracks
-                // Optional: reset index if list became empty or changed
+                originalTrackList = tracks
                 if (currentIndex >= trackList.size) {
                     currentIndex = 0
                 }
+            }
+        }
+
+        serviceScope.launch {
+            playbackRepo.shuffle.collect { shuffle ->
+                updateTrackList()
             }
         }
     }
@@ -108,6 +116,7 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
                     if (playlistId?.isNotEmpty() == true) {
                         serviceScope.launch {
                             trackList = libraryDao.loadAllTracksByIds(playlistId)
+                            originalTrackList = trackList
                             currentIndex = startIndex
                             if (trackList.isNotEmpty()) {
                                 playTrack(currentIndex)
@@ -185,10 +194,22 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
         }
     }
 
+    private fun updateTrackList() {
+        trackList = if (playbackRepo.shuffle.value) {
+            originalTrackList.shuffled().toMutableList()
+        } else {
+            originalTrackList.toMutableList()
+        }
+
+        val currentTrack = playbackRepo.currentTrack.value
+        currentIndex = trackList.indexOfFirst { it.trackId == currentTrack?.trackId }
+    }
+
     private fun playPause() {
         if (mediaPlayer == null) {
             serviceScope.launch {
                 trackList = libraryDao.getAllTracks().first()
+                originalTrackList = trackList
                 if (trackList.isEmpty()) return@launch
                 playTrack(currentIndex)
                 updateSession()
@@ -215,14 +236,18 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
 
     private fun skipToNext() {
         if (trackList.isEmpty()) return
-        currentIndex = (currentIndex + 1) % trackList.size
+        if (!playbackRepo.repeat.value) {
+            currentIndex = (currentIndex + 1) % trackList.size
+        }
         playTrack(currentIndex)
         updateSession()
     }
 
     private fun skipToPrev() {
         if (trackList.isEmpty()) return
-        currentIndex = if (currentIndex == 0) trackList.lastIndex else currentIndex - 1
+        if (!playbackRepo.repeat.value) {
+            currentIndex = if (currentIndex == 0) trackList.lastIndex else currentIndex - 1
+        }
         playTrack(currentIndex)
         updateSession()
     }
