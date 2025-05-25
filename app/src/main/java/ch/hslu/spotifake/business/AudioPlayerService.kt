@@ -5,8 +5,12 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Binder
@@ -17,6 +21,7 @@ import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.media.MediaBrowserServiceCompat
 import androidx.media.app.NotificationCompat.MediaStyle
@@ -67,17 +72,51 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
     private val playbackStateBuilder = PlaybackStateCompat.Builder()
     private var mediaPlayer: MediaPlayer? = null
 
-
-    inner class LocalBinder : Binder() {
-        fun getService(): AudioPlayerService = this@AudioPlayerService
-    }
-    private val binder = LocalBinder()
+    private lateinit var audioManager: AudioManager
+    private lateinit var afRequest: AudioFocusRequest
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
         initMediaSession()
-        sessionToken = mediaSession.sessionToken
+
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+        // 1a) Build the focus-request with your media attributes
+        val attrs = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            .build()
+
+        afRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            .setAudioAttributes(attrs)
+            .setOnAudioFocusChangeListener { change ->
+                when (change) {
+                    AudioManager.AUDIOFOCUS_GAIN -> {
+                        // resumed by Auto reconnect, or regained after duck
+                        mediaPlayer?.apply {
+                            if (!isPlaying) start()
+                        }
+                        updateSession()
+                    }
+                    AudioManager.AUDIOFOCUS_LOSS -> {
+                        // permanent loss: stop completely
+                        mediaSession.controller.transportControls.pause()
+                    }
+                    AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                        // brief duck: pause but remember to resume
+                        if (mediaPlayer?.isPlaying == true) {
+                            mediaSession.controller.transportControls.pause()
+                        }
+                    }
+                    AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                        // duck volume
+                        mediaPlayer?.setVolume(0.2f, 0.2f)
+                    }
+                }
+            }
+            .build()
+
 
         serviceScope.launch {
             libraryDao.getAllTracks().collect { tracks ->
@@ -86,12 +125,15 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
                 if (currentIndex >= trackList.size) {
                     currentIndex = 0
                 }
+
+                notifyChildrenChanged("root")
             }
         }
 
         serviceScope.launch {
-            playbackRepo.shuffle.collect { shuffle ->
+            playbackRepo.shuffle.collect {
                 updateTrackList()
+                notifyChildrenChanged("root")
             }
         }
     }
@@ -134,6 +176,7 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
     }
 
     override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot {
+        Log.i("AudioPlayerService", "onGetRoot called with package: $clientPackageName, uid: $clientUid")
         return BrowserRoot("root", null)
     }
 
@@ -142,6 +185,7 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
         parentId: String,
         result: Result<MutableList<MediaBrowserCompat.MediaItem>>
     ) {
+        Log.i("AudioPlayerService", "onLoadChildren called with parentId: $parentId")
         if (parentId == "root") {
             val items = trackList.map { track ->
                 MediaBrowserCompat.MediaItem(
@@ -149,7 +193,7 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
                         .setMediaId(track.trackId.toString())
                         .setTitle(track.trackName)
                         .setSubtitle(track.artist)
-                        .setIconUri(Uri.parse(track.cover))
+                        .setIconUri(Uri.parse(track.cover?: Track.DEFAULT_COVER_URL))
                         .build(),
                     MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
                 )
@@ -166,12 +210,8 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
         super.onTaskRemoved(rootIntent)
     }
 
-    override fun onBind(intent: Intent?): IBinder {
-        return binder
-    }
-
     private fun initMediaSession() {
-        mediaSession = MediaSessionCompat(this, "AudioPlayerService").apply {
+        mediaSession = MediaSessionCompat(applicationContext, "AudioPlayerService").apply {
             setCallback(object : MediaSessionCompat.Callback() {
                 override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
                     val index = trackList.indexOfFirst { it.trackId.toString() == mediaId }
@@ -186,10 +226,13 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
                 override fun onSkipToNext() = skipToNext()
                 override fun onSkipToPrevious() = skipToPrev()
                 override fun onStop() {
+                    audioManager.abandonAudioFocusRequest(afRequest)
+                    mediaPlayer?.release()
                     stopForeground(STOP_FOREGROUND_REMOVE)
                     stopSelf()
                 }
             })
+            setSessionToken(sessionToken)
             isActive = true
         }
     }
@@ -223,16 +266,58 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
     }
 
     private fun playTrack(index: Int) {
-        val track = trackList[index]
+        val test = if (index < 0) 0 else index
+        if (index < 0) {
+            Log.e("AudioPlayerService", "Invalid track index: $index")
+//            index = 0
+        }
+        val track = trackList[test]
         playbackRepo.updateCurrentTrack(track)
+
+        if (audioManager.requestAudioFocus(afRequest)
+            != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+            // we didn’t get focus—abandon and bail out
+            audioManager.abandonAudioFocusRequest(afRequest)
+            return
+        }
+
+        // 1) Tear down old player and make a fresh one
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer().apply {
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
             setDataSource(this@AudioPlayerService, Uri.parse(track.fileURI))
-            prepare()
-            start()
+            setOnPreparedListener { mp ->
+                mp.start()
+                updateSession()
+            }
+            prepareAsync()
             setOnCompletionListener { skipToNext() }
         }
     }
+
+    private fun requestAudioFocus(): Boolean {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val attrs = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+            .build()
+
+        val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            .setAudioAttributes(attrs)
+            .setOnAudioFocusChangeListener { change ->
+                if (change <= 0) mediaSession.controller.transportControls.pause()
+            }
+            .build()
+
+        return audioManager.requestAudioFocus(focusRequest) ==
+                AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+    }
+
 
     private fun skipToNext() {
         if (trackList.isEmpty()) return
@@ -240,7 +325,6 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
             currentIndex = (currentIndex + 1) % trackList.size
         }
         playTrack(currentIndex)
-        updateSession()
     }
 
     private fun skipToPrev() {
@@ -249,7 +333,6 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
             currentIndex = if (currentIndex == 0) trackList.lastIndex else currentIndex - 1
         }
         playTrack(currentIndex)
-        updateSession()
     }
 
     private fun updateSession() {
@@ -280,6 +363,8 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
                     MediaMetadataCompat.Builder()
                         .putString(MediaMetadataCompat.METADATA_KEY_TITLE, track.trackName)
                         .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, track.artist)
+                        .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, track.cover ?: Track.DEFAULT_COVER_URL)
+                        .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON_URI, track.cover ?: Track.DEFAULT_COVER_URL)
                         .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
                         .build()
                 )
