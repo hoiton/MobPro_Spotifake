@@ -269,19 +269,16 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
         val test = if (index < 0) 0 else index
         if (index < 0) {
             Log.e("AudioPlayerService", "Invalid track index: $index")
-//            index = 0
         }
         val track = trackList[test]
         playbackRepo.updateCurrentTrack(track)
 
         if (audioManager.requestAudioFocus(afRequest)
             != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            // we didn’t get focus—abandon and bail out
             audioManager.abandonAudioFocusRequest(afRequest)
             return
         }
 
-        // 1) Tear down old player and make a fresh one
         mediaPlayer?.release()
         mediaPlayer = MediaPlayer().apply {
             setAudioAttributes(
@@ -299,25 +296,6 @@ class AudioPlayerService : MediaBrowserServiceCompat() {
             setOnCompletionListener { skipToNext() }
         }
     }
-
-    private fun requestAudioFocus(): Boolean {
-        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        val attrs = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_MEDIA)
-            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-            .build()
-
-        val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-            .setAudioAttributes(attrs)
-            .setOnAudioFocusChangeListener { change ->
-                if (change <= 0) mediaSession.controller.transportControls.pause()
-            }
-            .build()
-
-        return audioManager.requestAudioFocus(focusRequest) ==
-                AudioManager.AUDIOFOCUS_REQUEST_GRANTED
-    }
-
 
     private fun skipToNext() {
         if (trackList.isEmpty()) return
