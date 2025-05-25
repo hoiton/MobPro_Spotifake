@@ -68,7 +68,7 @@ fun PlaylistView(
             Text(
                 text = "Playlists",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)
+                modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp)
             )
 
             LazyColumn(modifier = Modifier.fillMaxSize()) {

@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MusicOff
 import androidx.compose.material.icons.filled.Search
@@ -33,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import ch.hslu.spotifake.db.PlaylistWithTracks
 import ch.hslu.spotifake.db.Track
 
@@ -50,90 +53,97 @@ fun TracksView(
     onPlayTrack: (List<Track>, Int) -> Unit,
     onAddTrack: () -> Unit,
     isPrimaryLibrary: Boolean,
+    navController: NavHostController
 ) {
     val (showDialog, trackToAdd) = dialogState
 
     var filterText by remember { mutableStateOf("") }
-    var showSearchBar by remember { mutableStateOf(false) }
 
     val filteredTracks = playlistWithTracks.tracks.filter {
         it.trackName.contains(filterText, ignoreCase = true)
+                || it.artist.contains(filterText, ignoreCase = true)
     }
 
     Column {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(top = 8.dp)
+                .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (!isPrimaryLibrary) {
+                IconButton(
+                    onClick = {
+                        navController.navigateUp()
+                    },
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Go back",
+                    )
+                }
+
+            }
             Text(
                 text = playlistWithTracks.playlist.playlistName,
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.weight(1f)
-            )
-
-            IconButton(onClick = { showSearchBar = !showSearchBar }) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search Tracks"
-                )
-            }
-        }
-
-        if (showSearchBar) {
-            OutlinedTextField(
-                value = filterText,
-                onValueChange = { filterText = it },
-                label = { Text("Search by track name") },
-                trailingIcon = {
-                    IconButton(onClick = {
-                        filterText = ""
-                        showSearchBar = false
-                    }) {
-                        Icon(Icons.Default.Close, contentDescription = "Clear Search")
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    .padding(vertical = 8.dp)
             )
         }
 
         Box(modifier = Modifier.fillMaxSize()) {
-            if (filteredTracks.isEmpty()) {
+            if (playlistWithTracks.tracks.isEmpty()) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(Icons.Default.MusicOff, contentDescription = null, tint = Color.Gray)
-                    Text("No tracks found...", color = Color.Gray)
+                    Text("Pretty lonely in here...", color = Color.Gray)
+                    Text("Why not add some Tracks?", color = Color.Gray)
                 }
             } else {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    if (!isPrimaryLibrary) {
-                        PlaybackControls(
-                            playlistWithTracks = playlistWithTracks,
-                            onPlayAll = onPlayAll,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                    PlaybackControls(
+                        playlistWithTracks = playlistWithTracks,
+                        onPlayAll = onPlayAll,
+                        modifier = Modifier.fillMaxWidth(),
+                        onFilterValueChanged = { filterText = it }
+                    )
 
-                    LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(filteredTracks) { track ->
-                            val originalIndex = playlistWithTracks.tracks.indexOf(track)
+                    if (filteredTracks.isEmpty())
+                    {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(Icons.Default.MusicOff, contentDescription = null, tint = Color.Gray)
+                            Text("No tracks found...", color = Color.Gray)
+                        }
+                    } else {
+                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                            items(filteredTracks) { track ->
+                                val originalIndex = playlistWithTracks.tracks.indexOf(track)
 
-                            TrackItem(
-                                playlistWithTracks = playlistWithTracks,
-                                index = originalIndex,
-                                track = track,
-                                playlistId = playlistWithTracks.playlist.playlistId,
-                                onAddToPlaylist = { onTrackSelectedToAdd(track) },
-                                onRemoveFromPlaylist = { onRemoveFromPlaylist(track) },
-                                onDelete = { onDeleteTrack(track) },
-                                onPlayClick = { _, _ -> onPlayTrack(playlistWithTracks.tracks, originalIndex) }
-                            )
+                                TrackItem(
+                                    playlistWithTracks = playlistWithTracks,
+                                    index = originalIndex,
+                                    track = track,
+                                    playlistId = playlistWithTracks.playlist.playlistId,
+                                    onAddToPlaylist = { onTrackSelectedToAdd(track) },
+                                    onRemoveFromPlaylist = { onRemoveFromPlaylist(track) },
+                                    onDelete = { onDeleteTrack(track) },
+                                    onPlayClick = { _, _ ->
+                                        onPlayTrack(
+                                            playlistWithTracks.tracks,
+                                            originalIndex
+                                        )
+                                    }
+                                )
+                            }
                         }
                     }
                 }

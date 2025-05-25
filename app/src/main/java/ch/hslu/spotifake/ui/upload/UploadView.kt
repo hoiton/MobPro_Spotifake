@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.outlined.FolderOpen
@@ -24,9 +25,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -54,22 +55,53 @@ fun UploadView(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? -> viewModel.onFileSelected(uri) }
 
-    Surface(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp),
     ) {
-        Column(
+        Row(
             modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .fillMaxWidth()
+                .padding(top = 8.dp, bottom = 16.dp)
+                .padding(horizontal = 0.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            IconButton(
+                onClick = {
+                    navHostController.navigateUp()
+                },
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Go back",
+                )
+            }
             Text(
-                text = "Add a New Track",
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+                text = "Add a new Track",
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(vertical = 8.dp)
             )
 
+            IconButton(
+                onClick = { viewModel.saveTrack(navHostController::popBackStack) },
+                enabled = trackName.isNotBlank() && artistName.isNotBlank() && !selectedFileName.isNullOrBlank(),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = "Save Track",
+                )
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
             Card(
                 modifier = Modifier
                     .size(250.dp)
@@ -77,12 +109,12 @@ fun UploadView(
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                    AsyncImage(
-                        model = albumArtUrl,
-                        contentDescription = "Album Art",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                AsyncImage(
+                    model = albumArtUrl,
+                    contentDescription = "Album Art",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
 
             }
 
@@ -131,21 +163,6 @@ fun UploadView(
                 )
                 Spacer(Modifier.width(8.dp))
                 Text("Select Audio File")
-            }
-
-            Button(
-                onClick = { viewModel.saveTrack(navHostController::popBackStack) },
-                enabled = trackName.isNotBlank() && artistName.isNotBlank() && !selectedFileName.isNullOrBlank(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Check,
-                    contentDescription = null
-                )
-                Spacer(Modifier.width(8.dp))
-                Text("Save Track")
             }
         }
     }

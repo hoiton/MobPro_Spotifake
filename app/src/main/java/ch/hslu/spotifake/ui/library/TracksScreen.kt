@@ -51,6 +51,7 @@ fun TracksScreen(
             onPlayTrack = { tracks, index -> viewModel.playTrack(tracks, index) },
             onAddTrack = { navHostController.navigate(SpotifakeScreens.Upload.route) },
             isPrimaryLibrary = isPrimaryLibrary,
+            navController = navHostController
         )
     }
 
